@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The job id "ci" is the required status check on main (see mgpl-diagnostics/.github scripts/protect-repos.mjs).
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+          scope: "@mgpl-diagnostics"
+      # @mgpl-diagnostics/client comes from GitHub Packages. Switch to `npm ci` once package-lock.json is committed.
+      - run: npm install --no-audit --no-fund
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+        env:
+          MGPL_API_URL: http://localhost:4000

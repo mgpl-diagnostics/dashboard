@@ -1,0 +1,52 @@
+@layer mantine, mantine-datatable, app;
+
+@layer app {
+  :root {
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Figures: tabular, one format across the screen. */
+  .figure {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* The content column. Offsets come from Mantine's AppShell variables, so the same rules work with
+     GSAP's ScrollSmoother (fixed wrapper) and with native scrolling (touch, reduced motion). */
+  .shell-content {
+    padding-top: calc(var(--app-shell-header-offset, 0px) + 24px);
+    padding-inline-start: calc(var(--app-shell-navbar-offset, 0px) + 24px);
+    padding-inline-end: 24px;
+    padding-bottom: 48px;
+    min-height: 100dvh;
+  }
+
+  @media (max-width: 48em) {
+    .shell-content {
+      padding-top: calc(var(--app-shell-header-offset, 0px) + 16px);
+      padding-inline-start: 16px;
+      padding-inline-end: 16px;
+    }
+  }
+
+  .shell-inner {
+    max-width: 1480px;
+    margin-inline: auto;
+  }
+
+  [data-enter] {
+    will-change: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+}
