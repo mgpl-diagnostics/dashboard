@@ -20,12 +20,15 @@ const MESSAGES: Record<string, string> = {
   INVALID_CREDENTIALS: "That email and password don't match. Check both and try again",
   ACCOUNT_DISABLED: "This account is switched off. Ask your admin to turn it back on",
   INVITE_PENDING: "This account hasn't been set up yet. Use the link in your invite email",
-  ORG_REQUIRED: "This email is in more than one lab. Enter the lab code",
+  ORG_REQUIRED: "This email is in more than one lab. Enter the code of the lab you want to sign in to",
 };
 
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  // The api finds the lab from the account itself. The code is asked for only when one email
+  // belongs to several labs (ORG_REQUIRED); a deployment can also preset it.
+  const [needOrg, setNeedOrg] = useState(false);
   const [resetOpen, reset] = useDisclosure(false);
   const form = useForm({
     mode: "uncontrolled",
@@ -41,6 +44,7 @@ export default function LoginPage() {
       router.replace(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
     } catch (err) {
       const code = errorCode(err);
+      if (code === "ORG_REQUIRED") setNeedOrg(true);
       setError((code && MESSAGES[code]) || errorMessage(err));
     }
   });
@@ -55,7 +59,9 @@ export default function LoginPage() {
               {error}
             </Alert>
           )}
-          <TextInput label="Lab code" description="Leave empty if you work at one lab" autoComplete="organization" {...form.getInputProps("orgCode")} key={form.key("orgCode")} />
+          {needOrg && (
+            <TextInput label="Lab code" autoComplete="organization" {...form.getInputProps("orgCode")} key={form.key("orgCode")} />
+          )}
           <TextInput label="Email" type="email" autoComplete="username" inputMode="email" required {...form.getInputProps("email")} key={form.key("email")} />
           <PasswordInput label="Password" autoComplete="current-password" required {...form.getInputProps("password")} key={form.key("password")} />
           <Button type="submit" size="md" loading={form.submitting}>Sign in</Button>
