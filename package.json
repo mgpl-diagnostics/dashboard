@@ -1,0 +1,51 @@
+{
+  "name": "@mgpl-diagnostics/dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MGPL Diagnostics staff dashboard: one Next.js app for every role (owner, admin, branch manager, front desk, phlebotomist, technician, pathologist, accountant, referring doctor) on the GraphQL api.",
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start -p 3001",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "@mantine/charts": "9.7.3",
+    "@mantine/core": "9.7.3",
+    "@mantine/dates": "9.7.3",
+    "@mantine/form": "9.7.3",
+    "@mantine/hooks": "9.7.3",
+    "@mantine/modals": "9.7.3",
+    "@mantine/notifications": "9.7.3",
+    "@mantine/nprogress": "9.7.3",
+    "@mantine/spotlight": "9.7.3",
+    "@mgpl-diagnostics/client": "^1.4.0",
+    "@phosphor-icons/react": "^2.1.10",
+    "@tanstack/react-query": "5.99.2",
+    "animejs": "4.5.0",
+    "clsx": "^2.1.1",
+    "dayjs": "^1.11.13",
+    "gsap": "3.15.0",
+    "mantine-datatable": "^9.4.0",
+    "mantine-form-zod-resolver": "^1.3.0",
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "recharts": "^3.2.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@tanstack/react-query-devtools": "5.99.2",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "postcss": "^8.5.6",
+    "postcss-preset-mantine": "^1.18.0",
+    "postcss-simple-vars": "^7.0.1",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,83 @@
+"use client";
+import { Badge, Button, Group, Loader, Select, Stack, Table, Text, TextInput } from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { useQuery } from "@tanstack/react-query";
+import type { Gql } from "@mgpl-diagnostics/client";
+import { mgpl } from "@/lib/mgpl";
+import { useAction } from "@/lib/queries";
+import { reports, type Report } from "@/lib/reports";
+
+const FLAG: Record<string, { label: string; color: string }> = { L: { label: "Low", color: "navy" }, H: { label: "High", color: "red" }, A: { label: "Abnormal", color: "red" } };
+
+export function FlagBadge({ flag }: { flag: Gql.ResultFlag | null }) {
+  const f = flag && FLAG[flag];
+  return f ? <Badge color={f.color} size="sm">{f.label}</Badge> : null;
+}
+
+/**
+ * Result entry from catalog-kit's parameters (units, methods, ranges for the patient's sex). The api
+ * fills unit, range and flag from the catalog, so only values are sent.
+ */
+export function ResultsForm({ report, sex, onSaved, onCancel }: { report: Report; sex: Gql.Sex | undefined; onSaved: () => void; onCancel: () => void }) {
+  const test = useQuery({ queryKey: ["mgpl", "catalog", "test", report.testCode, sex], queryFn: () => mgpl.catalog.test(report.testCode, sex), staleTime: 30 * 60_000 });
+  if (test.isPending) return <Loader size="sm" />;
+  if (!test.data) return <Text size="sm" c="dimmed">This test isn&apos;t in the catalog, so there&apos;s no form for it. Ask the admin to add it.</Text>;
+  const params = test.data.parameters.filter((p) => p.name && p.type !== "title" && p.type !== "image" && !p.calculated);
+  if (!params.length) return <Text size="sm" c="dimmed">This test has no parameters to enter.</Text>;
+  return <Entry report={report} params={params} onSaved={onSaved} onCancel={onCancel} />;
+}
+
+function Entry({ report, params, onSaved, onCancel }: { report: Report; params: Gql.CatalogParameter[]; onSaved: () => void; onCancel: () => void }) {
+  const existing = new Map(report.results.map((r) => [r.parameter.toLowerCase(), r.value]));
+  const form = useForm<Record<string, string>>({
+    initialValues: Object.fromEntries(params.map((p) => [p.name!, existing.get(p.name!.toLowerCase()) ?? ""])),
+  });
+  const save = useAction((results: Gql.ResultInput[]) => reports.saveResults(report.id, results), {
+    success: "Results saved",
+    refresh: [["mgpl", "bookings"], ["mgpl", "reports"]],
+    onDone: onSaved,
+  });
+
+  return (
+    <form
+      onSubmit={form.onSubmit((v) =>
+        save.mutate(params.map((p) => ({ parameter: p.name!, value: (v[p.name!] ?? "").trim() })).filter((r) => r.value !== "")),
+      )}
+    >
+      <Stack gap="sm">
+        <Table.ScrollContainer minWidth={520}>
+          <Table verticalSpacing={6}>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Parameter</Table.Th>
+                <Table.Th w={180}>Result</Table.Th>
+                <Table.Th>Unit</Table.Th>
+                <Table.Th>Reference</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {params.map((p) => (
+                <Table.Tr key={p.name}>
+                  <Table.Td><Text size="sm">{p.name}</Text>{p.method && <Text size="xs" c="dimmed">{p.method}</Text>}</Table.Td>
+                  <Table.Td>
+                    {p.type === "options" && p.options?.length ? (
+                      <Select size="xs" aria-label={p.name!} data={p.options} clearable allowDeselect {...form.getInputProps(p.name!)} />
+                    ) : (
+                      <TextInput size="xs" aria-label={p.name!} inputMode={p.type === "numeric" ? "decimal" : "text"} ff={p.type === "numeric" ? "monospace" : undefined} {...form.getInputProps(p.name!)} />
+                    )}
+                  </Table.Td>
+                  <Table.Td><Text size="xs" c="dimmed">{p.unit ?? ""}</Text></Table.Td>
+                  <Table.Td><Text size="xs" c="dimmed" style={{ whiteSpace: "pre-line" }}>{p.range || p.referenceText || ""}</Text></Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
+        <Group justify="flex-end" gap="xs">
+          <Button variant="default" size="sm" onClick={onCancel}>Cancel</Button>
+          <Button type="submit" size="sm" loading={save.isPending}>Save results</Button>
+        </Group>
+      </Stack>
+    </form>
+  );
+}
