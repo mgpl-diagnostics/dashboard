@@ -1,7 +1,7 @@
 "use client";
 // One person, several labs (api: myOrganizations, switchOrganization, ORG_REQUIRED's extensions.organizations).
 // Client 1.5 has these as auth.organizations / auth.switchOrganization / organizationChoices; written here with
-// mgpl.request so the app works on client 1.4 and on an api without them (no labs → no switcher).
+// mgpl.request so the app works on an api without them (no labs → no switcher).
 import { MgplGraphQLError, type Gql } from "@mgpl-diagnostics/client";
 import { mgpl, session } from "./mgpl";
 
@@ -25,7 +25,10 @@ export const labs = {
       throw err;
     }
   },
-  /** Moves the session to the person's account in that lab (no password) and keeps the new tokens. */
+  /**
+   * Moves the session to the person's account in that lab (no password). The api sets the new session as
+   * cookies (the token fields come back null); the session manager keeps only its expiry and user.
+   */
   async switchTo(orgCode: string): Promise<void> {
     const device = await session.device();
     const r = await mgpl.request<{ switchOrganization: Gql.LoginResult }>(

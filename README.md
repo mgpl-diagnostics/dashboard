@@ -72,10 +72,15 @@ release, with the release notes and the update commands on the Updates page.
 
 - The browser calls `/graphql` on the dashboard's own origin; `proxy.ts` forwards it to `MGPL_API_URL`, so there
   is no CORS and the api address stays on the server. With `MGPL_PUBLIC_API_URL` set, the root layout writes
-  that address into `<head>` (`lib/api-url.ts`) and the browser calls the api directly.
-- Tokens: a 15-minute access JWT and a single-use refresh token, kept by the client's session manager
-  (localStorage, shared across tabs, refreshed once for all tabs). Signing out, or a refresh from another
-  device, ends the session; cached data is cleared.
+  that address into `<head>` (`lib/api-url.ts`) and the browser calls the api directly; the CSP (`lib/csp.ts`,
+  set per request in `proxy.ts`) then allows that one origin in `connect-src`.
+- Tokens: a 15-minute access JWT and a single-use refresh token, held by the api in **httpOnly cookies**
+  (`__Host-mgpl_access`, `__Host-mgpl_refresh`; Secure, SameSite=Strict). No script on the page can read
+  them. The client's session manager runs in cookie mode: every request sends `x-mgpl-auth: cookie` (the
+  api's CSRF check), and localStorage keeps only the expiry times and the user, so tabs stay in step and the
+  refresh runs once for all of them. Signing out, or a refresh from another device, ends the session;
+  cached data is cleared. Needs an api with cookie sessions; outside docker-compose, its `CORS_ORIGINS`
+  must list the dashboard's origin.
 - Pages render per request only to read `MGPL_PUBLIC_API_URL` (the HTML is a shell); data loads in the browser
   with TanStack Query.
 - Staff only, so never in search or AI indexes: `app/robots.ts` disallows everything, every page has a
