@@ -4,10 +4,18 @@
 // (and no XSS bug) can read a token. Every request sends `x-mgpl-auth: cookie`, the api's CSRF check.
 // localStorage holds only that a session exists, its expiry times and the user, so a reload stays signed
 // in and tabs stay in step; the refresh still runs once for every tab (Web Locks), with this device's
-// signals. Requests go to "/graphql" on this origin; proxy.ts (or nginx) forwards them.
+// signals. Requests go to "/graphql" on this origin; proxy.ts (or nginx) forwards them. With MGPL_PUBLIC_API_URL
+// set on the server, they go straight to the api instead (lib/api-url.ts, written into <head>): same site,
+// so the SameSite=Strict cookies still travel, and the api's CORS_ORIGINS lists this origin.
 import { createMgplGraphQLClient, createSessionManager, webSessionStorage, MgplGraphQLError } from "@mgpl-diagnostics/client";
 
-const url = "/graphql";
+declare global {
+  interface Window {
+    __MGPL_API_URL__?: string;
+  }
+}
+
+const url = (typeof window !== "undefined" && window.__MGPL_API_URL__) || "/graphql";
 
 // Before cookie sessions the tokens themselves lived under this key: remove them (people sign in once more).
 try {

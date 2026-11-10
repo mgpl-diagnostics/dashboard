@@ -9,7 +9,9 @@ import "@mantine/spotlight/styles.layer.css";
 import "@mantine/nprogress/styles.layer.css";
 import "mantine-datatable/styles.layer.css";
 import "./globals.css";
+import { connection } from "next/server";
 import { Providers } from "./providers";
+import { apiUrlScript, publicApiUrl } from "@/lib/api-url";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" });
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "swap" });
@@ -41,11 +43,15 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // rendered per request, so MGPL_PUBLIC_API_URL is read from the running server, not frozen at build time
+  await connection();
+  const apiUrl = publicApiUrl();
   return (
     <html lang="en-IN" {...mantineHtmlProps} className={`${outfit.variable} ${geist.variable} ${geistMono.variable}`}>
       <head>
         <ColorSchemeScript defaultColorScheme="auto" />
+        {apiUrl && <script dangerouslySetInnerHTML={{ __html: apiUrlScript(apiUrl) }} />}
       </head>
       <body>
         <Providers>{children}</Providers>

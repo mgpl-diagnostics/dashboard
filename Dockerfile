@@ -4,7 +4,8 @@
 # as a secret (never a build arg, which would stay in the image history):
 #   docker build --secret id=npm_token,env=NODE_AUTH_TOKEN -t mgpl-dashboard .
 # Run:  docker run -p 3000:3000 -e MGPL_API_URL=http://your-api:4000 ghcr.io/mgpl-diagnostics/dashboard
-# MGPL_API_URL is read when the server starts (proxy.ts). NEXT_PUBLIC_* values are fixed at build time.
+# MGPL_API_URL is read when the server starts (proxy.ts); so is MGPL_PUBLIC_API_URL (optional: the browser then
+# calls the api directly, see lib/api-url.ts). NEXT_PUBLIC_* values are fixed at build time.
 
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
