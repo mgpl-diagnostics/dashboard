@@ -1,0 +1,32 @@
+▲ Next.js 16.2.6
+- Local:         http://127.0.0.1:3321
+- Network:       http://127.0.0.1:3321
+✓ Ready in 0ms
+⨯ TypeError: c.getItem is not a function
+    at Object.get (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\_0i3uayt._.js:97:10422)
+    at A (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\_0i3uayt._.js:97:11316)
+    at module evaluation (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\_0i3uayt._.js:97:23338)
+    at instantiateModule (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\[turbopack]_runtime.js:853:9)
+    at getOrInstantiateModuleFromParent (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\[turbopack]_runtime.js:877:12)
+    at Context.esmImport [as i] (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\[turbopack]_runtime.js:281:20)
+    at module evaluation (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\_0dyrtlv._.js:1:8910)
+    at instantiateModule (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\[turbopack]_runtime.js:853:9)
+    at getOrInstantiateModuleFromParent (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\[turbopack]_runtime.js:877:12)
+    at Context.esmImport [as i] (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\[turbopack]_runtime.js:281:20) {
+  digest: '3545690232'
+}
+(node:24084) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+⨯ TypeError: c.getItem is not a function
+    at Object.get (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\_0i3uayt._.js:97:10422)
+    at A (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\_0i3uayt._.js:97:11316)
+    at module evaluation (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\_0i3uayt._.js:97:23338)
+    at instantiateModule (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\[turbopack]_runtime.js:853:9)
+    at getOrInstantiateModuleFromParent (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\[turbopack]_runtime.js:877:12)
+    at Context.esmImport [as i] (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\[turbopack]_runtime.js:281:20)
+    at module evaluation (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\_0dyrtlv._.js:1:8910)
+    at instantiateModule (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\[turbopack]_runtime.js:853:9)
+    at getOrInstantiateModuleFromParent (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\[turbopack]_runtime.js:877:12)
+    at Context.esmImport [as i] (C:\Users\Himan\AppData\Local\Temp\claude\38e7001dbae1e819\5c5e0c10-1846-4272-ad20-97e992b799a8\scratchpad\dash-src\.next\standalone\.next\server\chunks\ssr\[turbopack]_runtime.js:281:20) {
+  digest: '3545690232'
+}

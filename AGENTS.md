@@ -24,6 +24,7 @@ lib/tubes.ts             sample type → tube cap colour (the signature detail)
 lib/format.ts            paise → Rs, IST dates, financial year
 lib/updates.ts           update notice: systemUpdates (settings:manage), APP_VERSION from package.json
 proxy.ts                 /graphql → MGPL_API_URL at run time (works in the Docker image)
+lib/api-url.ts           MGPL_PUBLIC_API_URL: the browser calls the api directly (read per request, written into <head>)
 Dockerfile               standalone image; .github/workflows/release.yml publishes it to GHCR on a v* tag
 ```
 
@@ -34,6 +35,8 @@ Dockerfile               standalone image; .github/workflows/release.yml publish
    data is TanStack Query, icons are Phosphor (`*Icon` exports). Glue components only.
 2. **Only `lib/mgpl.ts` talks to the api**, through `@mgpl-diagnostics/client`. Never import a backend kit.
    The browser calls `/graphql` on this origin; `proxy.ts` forwards it to `MGPL_API_URL` (read at run time).
+   With `MGPL_PUBLIC_API_URL` set, the browser calls the api directly instead (`lib/api-url.ts`): use it when
+   the api's own TLS proxy must see the browser (JA4 fingerprint); the api then lists this origin in `CORS_ORIGINS`.
 3. **Permissions are auth-kit's.** Hide what a role can't do (`can()` / `<Guard>`), but the api is the
    authority: every call is checked again per branch. Never send an `orgId` or `actorId`.
 4. **Money is integer paise** until it is printed (`rupees()`); rupees typed by people go through `toPaise()`.

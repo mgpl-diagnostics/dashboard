@@ -58,7 +58,10 @@ linux/arm64, built by `.github/workflows/release.yml` from a `v*` tag that equal
 docker run -p 3000:3000 -e MGPL_API_URL=http://your-api:4000 ghcr.io/mgpl-diagnostics/dashboard:latest
 ```
 
-`MGPL_API_URL` is read when the container starts (`proxy.ts`). `NEXT_PUBLIC_MGPL_ORG_CODE` is fixed at build
+`MGPL_API_URL` is read when the container starts (`proxy.ts`). Optional `MGPL_PUBLIC_API_URL` (also read at run
+time) sends the browser straight to the api, e.g. `https://api.example.in:8443/graphql`, so the api's own TLS
+proxy sees the browser's handshake (JA4 fingerprint) and IP; list the dashboard's origin in the api's
+`CORS_ORIGINS`. `NEXT_PUBLIC_MGPL_ORG_CODE` is fixed at build
 time, so the published image never sends one. To host everything (api, worker, databases, dashboard, nginx)
 on one server, use the api's `docker-compose.yml`; its guide is the api's
 [docs/19-updates.md](https://github.com/mgpl-diagnostics/api/blob/main/docs/19-updates.md), which also covers
@@ -68,11 +71,13 @@ release, with the release notes and the update commands on the Updates page.
 ## How it works
 
 - The browser calls `/graphql` on the dashboard's own origin; `proxy.ts` forwards it to `MGPL_API_URL`, so there
-  is no CORS and the api address stays on the server.
+  is no CORS and the api address stays on the server. With `MGPL_PUBLIC_API_URL` set, the root layout writes
+  that address into `<head>` (`lib/api-url.ts`) and the browser calls the api directly.
 - Tokens: a 15-minute access JWT and a single-use refresh token, kept by the client's session manager
   (localStorage, shared across tabs, refreshed once for all tabs). Signing out, or a refresh from another
   device, ends the session; cached data is cleared.
-- Every page is static; data loads in the browser with TanStack Query.
+- Pages render per request only to read `MGPL_PUBLIC_API_URL` (the HTML is a shell); data loads in the browser
+  with TanStack Query.
 
 ## Licence
 
