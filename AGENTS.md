@@ -12,7 +12,7 @@ app/(app)/               signed-in pages, one folder per menu item; layout.tsx m
 components/AppFrame.tsx  session check → viewer → AppShell (header, role-filtered sidebar, Spotlight, branch picker)
 components/SmoothScroll.tsx  GSAP ScrollSmoother around the content column
 components/booking/ report/  drawers and forms shared by several pages
-lib/mgpl.ts              THE client (@mgpl-diagnostics/client): session manager, tokens, refresh, device signals
+lib/mgpl.ts              THE client (@mgpl-diagnostics/client): session manager in cookie mode (httpOnly cookies, no token in JS), refresh, device signals
 lib/access.ts            menu, role names, permission matching (mirrors auth-kit's rbac.ts)
 lib/viewer.tsx           viewer context: can(permission), branches, picked branch
 lib/queries.ts           TanStack Query hooks + useAction (mutation + toast + refresh)
@@ -44,7 +44,9 @@ Dockerfile               standalone image; .github/workflows/release.yml publish
    case, no gradients, glows, emoji or exclamation marks, figures in `tabular-nums`.
 7. **Responsive**: check 390 px and 1440 px. Tables hide secondary columns with `visibleMediaQuery`;
    nothing scrolls the page sideways.
-8. Never commit tokens, `.env` files, patient data or real signatures. Samples are fictional.
+8. **No token in JavaScript.** Sessions are httpOnly cookies set by the api (`cookies: true` in `lib/mgpl.ts`).
+   Never read, store or log a token, and never put one in localStorage, sessionStorage or a URL.
+9. Never commit tokens, `.env` files, patient data or real signatures. Samples are fictional.
 
 ## Commands
 
