@@ -78,6 +78,10 @@ release, with the release notes and the update commands on the Updates page.
   device, ends the session; cached data is cleared.
 - Pages render per request only to read `MGPL_PUBLIC_API_URL` (the HTML is a shell); data loads in the browser
   with TanStack Query.
+- Staff only, so never in search or AI indexes: `app/robots.ts` disallows everything, every page has a
+  `noindex, nofollow` robots meta tag, and every response an `X-Robots-Tag` header (`next.config.ts`). Each
+  section sets its tab title in its own `layout.tsx`; `app/manifest.ts` lets staff install the app. Search
+  work for the public belongs in mgpl-diagnostics/website.
 
 ## Licence
 
