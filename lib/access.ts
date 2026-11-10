@@ -3,7 +3,7 @@
 import type { Icon } from "@phosphor-icons/react";
 import {
   SunHorizonIcon, UsersThreeIcon, CalendarCheckIcon, TestTubeIcon, FileTextIcon, ReceiptIcon,
-  BookOpenTextIcon, StethoscopeIcon, UserGearIcon, BuildingsIcon, ClockCounterClockwiseIcon, UserCircleIcon,
+  BookOpenTextIcon, StethoscopeIcon, UserGearIcon, BuildingsIcon, ClockCounterClockwiseIcon, UserCircleIcon, ArrowCircleUpIcon,
 } from "@phosphor-icons/react";
 
 export interface NavItem { href: string; label: string; icon: Icon; permission?: string; group: "Work" | "Money" | "Organisation" | "You" }
@@ -20,6 +20,7 @@ export const NAV: NavItem[] = [
   { href: "/users", label: "Users and roles", icon: UserGearIcon, permission: "user:read", group: "Organisation" },
   { href: "/branches", label: "Branches", icon: BuildingsIcon, permission: "branch:read", group: "Organisation" },
   { href: "/audit", label: "Audit log", icon: ClockCounterClockwiseIcon, permission: "audit:read", group: "Organisation" },
+  { href: "/updates", label: "Updates", icon: ArrowCircleUpIcon, permission: "settings:manage", group: "Organisation" },
   { href: "/account", label: "My account", icon: UserCircleIcon, group: "You" },
 ];
 

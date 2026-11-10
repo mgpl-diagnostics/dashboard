@@ -23,7 +23,7 @@ The menu, the "Waiting on you" list and every button follow the signed-in user's
 ## Pages
 
 Today · Patients · Bookings · Samples · Reports · Invoices · Accounts · Doctors · Users and roles ·
-Branches · Audit log · My account (password, signed-in devices). Ctrl K (or /) opens search for pages and actions.
+Branches · Audit log · Updates (owner and admin: new releases, what changed, how to update) · My account (password, signed-in devices). Ctrl K (or /) opens search for pages and actions.
 
 ## Stack
 
@@ -49,9 +49,25 @@ npm run dev                    # http://localhost:3001
 
 Start the api first (see its docs/03-getting-started.md) and sign in with a user it seeded.
 
+## Docker
+
+Every release publishes `ghcr.io/mgpl-diagnostics/dashboard:<version>` (and `:latest`) for linux/amd64 and
+linux/arm64, built by `.github/workflows/release.yml` from a `v*` tag that equals `package.json`'s version.
+
+```bash
+docker run -p 3000:3000 -e MGPL_API_URL=http://your-api:4000 ghcr.io/mgpl-diagnostics/dashboard:latest
+```
+
+`MGPL_API_URL` is read when the container starts (`proxy.ts`). `NEXT_PUBLIC_MGPL_ORG_CODE` is fixed at build
+time, so the published image never sends one. To host everything (api, worker, databases, dashboard, nginx)
+on one server, use the api's `docker-compose.yml`; its guide is the api's
+[docs/18-updates.md](https://github.com/mgpl-diagnostics/api/blob/main/docs/18-updates.md), which also covers
+updating. Owners and admins see "Update available: vX → vY" in the dashboard when either part has a newer
+release, with the release notes and the update commands on the Updates page.
+
 ## How it works
 
-- The browser calls `/graphql` on the dashboard's own origin; Next forwards it to `MGPL_API_URL`, so there
+- The browser calls `/graphql` on the dashboard's own origin; `proxy.ts` forwards it to `MGPL_API_URL`, so there
   is no CORS and the api address stays on the server.
 - Tokens: a 15-minute access JWT and a single-use refresh token, kept by the client's session manager
   (localStorage, shared across tabs, refreshed once for all tabs). Signing out, or a refresh from another

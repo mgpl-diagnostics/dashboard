@@ -22,6 +22,9 @@ lib/motion.ts            anime.js entrance and number tweens
 lib/theme.ts             Mantine theme: "Saffron & Neel" accent on graphite neutrals
 lib/tubes.ts             sample type → tube cap colour (the signature detail)
 lib/format.ts            paise → Rs, IST dates, financial year
+lib/updates.ts           update notice: systemUpdates (settings:manage), APP_VERSION from package.json
+proxy.ts                 /graphql → MGPL_API_URL at run time (works in the Docker image)
+Dockerfile               standalone image; .github/workflows/release.yml publishes it to GHCR on a v* tag
 ```
 
 ## Rules
@@ -30,7 +33,7 @@ lib/format.ts            paise → Rs, IST dates, financial year
    notifications, spotlight, nprogress), tables are mantine-datatable, forms are @mantine/form + zod,
    data is TanStack Query, icons are Phosphor (`*Icon` exports). Glue components only.
 2. **Only `lib/mgpl.ts` talks to the api**, through `@mgpl-diagnostics/client`. Never import a backend kit.
-   The browser calls `/graphql` on this origin; `next.config.ts` forwards it to `MGPL_API_URL`.
+   The browser calls `/graphql` on this origin; `proxy.ts` forwards it to `MGPL_API_URL` (read at run time).
 3. **Permissions are auth-kit's.** Hide what a role can't do (`can()` / `<Guard>`), but the api is the
    authority: every call is checked again per branch. Never send an `orgId` or `actorId`.
 4. **Money is integer paise** until it is printed (`rupees()`); rupees typed by people go through `toPaise()`.

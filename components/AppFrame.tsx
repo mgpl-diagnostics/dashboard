@@ -19,6 +19,8 @@ import { ViewerProvider, useViewer } from "@/lib/viewer";
 import { Brand } from "./Brand";
 import { SmoothScroll } from "./SmoothScroll";
 import { QueryError } from "./QueryError";
+import { UpdateNotice } from "./UpdateNotice";
+import { APP_VERSION } from "@/lib/updates";
 
 /** Signed-in area: checks the session, loads the viewer once, then draws the shell. */
 export function AppFrame({ children }: { children: ReactNode }) {
@@ -153,10 +155,14 @@ function Shell({ children }: { children: ReactNode }) {
           <Text size="xs" c="dimmed" lineClamp={2}>
             {[...new Set(viewer.user.roles.map((r) => roleName(r.role)))].join(", ") || "No role yet"}
           </Text>
+          <Text size="xs" c="dimmed" className="figure">Dashboard v{APP_VERSION}</Text>
         </AppShell.Section>
       </AppShell.Navbar>
 
-      <SmoothScroll>{children}</SmoothScroll>
+      <SmoothScroll>
+        {can("settings:manage") && <UpdateNotice />}
+        {children}
+      </SmoothScroll>
 
       <Spotlight
         actions={actions}
