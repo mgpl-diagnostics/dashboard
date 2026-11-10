@@ -25,6 +25,23 @@ const MESSAGES: Record<string, string> = {
   ORG_UNAVAILABLE: "That lab is no longer available to you. Pick another",
 };
 
+/**
+ * Where to go after signing in: a path on this origin, never another site. A prefix check is not
+ * enough: browsers drop tabs and newlines and read "\" as "/", so "/\tevil.example" or "/\evil.example"
+ * pass `startsWith("/") && !startsWith("//")` and still leave the site. Resolve it, then compare origins.
+ */
+function safeNext(next: string | null): string {
+  if (!next) return "/";
+  try {
+    const url = new URL(next, window.location.origin);
+    // "//host" as a path would be read as another site again when it is navigated to
+    if (url.origin !== window.location.origin || url.pathname.startsWith("//")) return "/";
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return "/";
+  }
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -45,8 +62,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await mgpl.auth.login({ email: v.email.trim(), password: v.password, orgCode: v.orgCode.trim() || undefined });
-      const next = new URLSearchParams(window.location.search).get("next");
-      router.replace(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
+      router.replace(safeNext(new URLSearchParams(window.location.search).get("next")));
     } catch (err) {
       const code = errorCode(err);
       if (code === "ORG_REQUIRED") {
