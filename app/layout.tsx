@@ -18,7 +18,18 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono"
 export const metadata: Metadata = {
   title: { default: "MGPL Dashboard", template: "%s · MGPL Dashboard" },
   description: "The work of Maa Gayatri Path Lab in one place: patients, bookings, samples, reports, billing and accounts.",
-  robots: { index: false, follow: false },
+  applicationName: "MGPL Dashboard",
+  // Staff only: keep every page out of search and AI indexes (see also app/robots.ts and the
+  // X-Robots-Tag header in next.config.ts).
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: { index: false, follow: false, noimageindex: true },
+  },
+  // Sign-in and reset links are shared on WhatsApp: a plain, non-indexable preview.
+  openGraph: { title: "MGPL Dashboard", description: "Maa Gayatri Path Lab staff sign-in.", type: "website" },
+  formatDetection: { telephone: false, email: false, address: false },
 };
 
 export const viewport: Viewport = {
