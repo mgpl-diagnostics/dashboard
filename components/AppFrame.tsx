@@ -8,9 +8,11 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Spotlight, spotlight, type SpotlightActionData } from "@mantine/spotlight";
-import { useQuery } from "@tanstack/react-query";
-import { MagnifyingGlassIcon, MoonIcon, SignOutIcon, SunIcon, UserCircleIcon, CaretUpDownIcon } from "@phosphor-icons/react";
-import { mgpl } from "@/lib/mgpl";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { notifications } from "@mantine/notifications";
+import { MagnifyingGlassIcon, MoonIcon, SignOutIcon, SunIcon, UserCircleIcon, CaretUpDownIcon, CheckIcon, BuildingsIcon } from "@phosphor-icons/react";
+import { errorMessage, mgpl } from "@/lib/mgpl";
+import { labs as labApi } from "@/lib/labs";
 import { useSession } from "@/lib/session";
 import { NAV, NAV_GROUPS, permits, roleName } from "@/lib/access";
 import { ViewerProvider, useViewer } from "@/lib/viewer";
@@ -42,6 +44,26 @@ export function AppFrame({ children }: { children: ReactNode }) {
   );
 }
 
+/** The labs this person can work in (same email); one entry when they work at one lab. */
+function useLabs() {
+  const qc = useQueryClient();
+  const router = useRouter();
+  const labs = useQuery({ queryKey: ["mgpl", "myOrganizations"], queryFn: labApi.mine, staleTime: 5 * 60_000, retry: false });
+  async function switchTo(code: string, name: string) {
+    try {
+      await labApi.switchTo(code);
+      // everything cached belongs to the old lab
+      await qc.resetQueries();
+      router.replace("/");
+      notifications.show({ color: "tulsi", title: `Now in ${name}`, message: "Bookings, reports and money now show this lab" });
+    } catch (err) {
+      notifications.show({ color: "red", title: "Couldn't switch lab", message: errorMessage(err) });
+      await qc.invalidateQueries({ queryKey: ["mgpl", "myOrganizations"] });
+    }
+  }
+  return { labs: labs.data ?? [], switchTo };
+}
+
 function Shell({ children }: { children: ReactNode }) {
   const [opened, { toggle, close }] = useDisclosure(false);
   const pathname = usePathname();
@@ -56,6 +78,8 @@ function Shell({ children }: { children: ReactNode }) {
   const actions: SpotlightActionData[] = items.map((n) => ({
     id: n.href, label: n.label, description: n.group, leftSection: <n.icon size={18} />, onClick: () => router.push(n.href),
   }));
+  const { labs, switchTo } = useLabs();
+  for (const l of labs) if (!l.current) actions.push({ id: `lab-${l.code}`, label: `Switch to ${l.name}`, description: "Lab", leftSection: <BuildingsIcon size={18} />, onClick: () => switchTo(l.code, l.name) });
   if (permits(viewer.permissions, "booking:create")) actions.unshift({ id: "new-booking", label: "New booking", description: "Work", onClick: () => router.push("/bookings?new=1") });
   if (permits(viewer.permissions, "patient:create")) actions.unshift({ id: "new-patient", label: "Register a patient", description: "Work", onClick: () => router.push("/patients?new=1") });
 
@@ -92,7 +116,7 @@ function Shell({ children }: { children: ReactNode }) {
               <MagnifyingGlassIcon size={18} />
             </ActionIcon>
             <Box visibleFrom="xs"><ColorSchemeToggle /></Box>
-            <UserMenu />
+            <UserMenu labs={labs} switchTo={switchTo} />
           </Group>
         </Group>
       </AppShell.Header>
@@ -158,7 +182,7 @@ function ColorSchemeToggle() {
   );
 }
 
-function UserMenu() {
+function UserMenu({ labs, switchTo }: ReturnType<typeof useLabs>) {
   const { viewer } = useViewer();
   const router = useRouter();
   const initials = viewer.user.name.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
@@ -178,6 +202,23 @@ function UserMenu() {
           <Text size="sm" c="var(--mantine-color-text)" fw={500} lineClamp={1}>{viewer.user.name}</Text>
           <Text size="xs" c="dimmed" lineClamp={1}>{viewer.user.email}</Text>
         </Menu.Label>
+        {labs.length > 1 && (
+          <>
+            <Menu.Divider />
+            <Menu.Label>Lab</Menu.Label>
+            {labs.map((l) => (
+              <Menu.Item
+                key={l.code}
+                leftSection={l.current ? <CheckIcon size={16} /> : <BuildingsIcon size={16} />}
+                disabled={l.current}
+                onClick={() => switchTo(l.code, l.name)}
+              >
+                {l.name}
+              </Menu.Item>
+            ))}
+            <Menu.Divider />
+          </>
+        )}
         <Menu.Item leftSection={<UserCircleIcon size={16} />} component={Link} href="/account">My account</Menu.Item>
         <Menu.Divider />
         <Menu.Item

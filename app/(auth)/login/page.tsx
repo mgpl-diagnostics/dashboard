@@ -7,7 +7,8 @@ import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { zod4Resolver } from "mantine-form-zod-resolver";
 import { z } from "zod";
-import { WarningCircleIcon } from "@phosphor-icons/react";
+import { CaretRightIcon, WarningCircleIcon } from "@phosphor-icons/react";
+import { labChoices } from "@/lib/labs";
 import { errorCode, errorMessage, mgpl } from "@/lib/mgpl";
 
 const schema = z.object({
@@ -20,12 +21,19 @@ const MESSAGES: Record<string, string> = {
   INVALID_CREDENTIALS: "That email and password don't match. Check both and try again",
   ACCOUNT_DISABLED: "This account is switched off. Ask your admin to turn it back on",
   INVITE_PENDING: "This account hasn't been set up yet. Use the link in your invite email",
-  ORG_REQUIRED: "This email is in more than one lab. Enter the lab code",
+  ORG_REQUIRED: "This email is in more than one lab. Enter the code of the lab you want to sign in to",
+  ORG_UNAVAILABLE: "That lab is no longer available to you. Pick another",
 };
 
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  // The api finds the lab from the account itself. The code is asked for only when one email
+  // belongs to several labs (ORG_REQUIRED); a deployment can also preset it.
+  const [needOrg, setNeedOrg] = useState(false);
+  // …or, when the api names them, the labs to pick from (only labs whose account matched the password)
+  const [labs, setLabs] = useState<{ code: string; name: string }[]>([]);
+  const [picking, setPicking] = useState<string | null>(null);
   const [resetOpen, reset] = useDisclosure(false);
   const form = useForm({
     mode: "uncontrolled",
@@ -33,7 +41,7 @@ export default function LoginPage() {
     validate: zod4Resolver(schema),
   });
 
-  const submit = form.onSubmit(async (v) => {
+  async function signIn(v: { email: string; password: string; orgCode: string }) {
     setError(null);
     try {
       await mgpl.auth.login({ email: v.email.trim(), password: v.password, orgCode: v.orgCode.trim() || undefined });
@@ -41,9 +49,63 @@ export default function LoginPage() {
       router.replace(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
     } catch (err) {
       const code = errorCode(err);
+      if (code === "ORG_REQUIRED") {
+        const choices = labChoices(err);
+        setLabs(choices);
+        if (choices.length) return; // the pick list says it all
+        setNeedOrg(true);
+      }
       setError((code && MESSAGES[code]) || errorMessage(err));
     }
-  });
+  }
+  const submit = form.onSubmit(signIn);
+
+  async function pick(code: string) {
+    setPicking(code);
+    await signIn({ ...form.getValues(), orgCode: code });
+    setPicking(null);
+  }
+
+  if (labs.length) {
+    return (
+      <Card>
+        <Stack gap="md">
+          <div>
+            <Title order={1} fz={24}>Choose a lab</Title>
+            <Text size="sm" c="dimmed" mt={4}>{form.getValues().email.trim()} works at more than one lab. You can switch later from the account menu.</Text>
+          </div>
+          {error && (
+            <Alert color="red" variant="light" icon={<WarningCircleIcon size={18} />} role="alert">
+              {error}
+            </Alert>
+          )}
+          <Stack gap="xs">
+            {labs.map((l) => (
+              <Button
+                key={l.code}
+                variant="default"
+                size="lg"
+                justify="space-between"
+                fullWidth
+                rightSection={<CaretRightIcon size={16} />}
+                loading={picking === l.code}
+                disabled={!!picking && picking !== l.code}
+                onClick={() => pick(l.code)}
+              >
+                <Stack gap={0} align="flex-start">
+                  <Text size="sm" fw={500} lh={1.3}>{l.name}</Text>
+                  <Text size="xs" c="dimmed" lh={1.3}>{l.code}</Text>
+                </Stack>
+              </Button>
+            ))}
+          </Stack>
+          <Group justify="flex-start">
+            <Anchor component="button" type="button" size="sm" onClick={() => { setLabs([]); setError(null); }}>Use another account</Anchor>
+          </Group>
+        </Stack>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -55,7 +117,9 @@ export default function LoginPage() {
               {error}
             </Alert>
           )}
-          <TextInput label="Lab code" description="Leave empty if you work at one lab" autoComplete="organization" {...form.getInputProps("orgCode")} key={form.key("orgCode")} />
+          {needOrg && (
+            <TextInput label="Lab code" autoComplete="organization" {...form.getInputProps("orgCode")} key={form.key("orgCode")} />
+          )}
           <TextInput label="Email" type="email" autoComplete="username" inputMode="email" required {...form.getInputProps("email")} key={form.key("email")} />
           <PasswordInput label="Password" autoComplete="current-password" required {...form.getInputProps("password")} key={form.key("password")} />
           <Button type="submit" size="md" loading={form.submitting}>Sign in</Button>
