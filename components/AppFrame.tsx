@@ -22,6 +22,19 @@ import { QueryError } from "./QueryError";
 import { UpdateNotice } from "./UpdateNotice";
 import { APP_VERSION } from "@/lib/updates";
 
+/**
+ * The viewer, or null. A session that looks alive here but that the api sees without a valid token (cookies
+ * cleared, a clock difference with the server) refreshes once; if that fails too, it signs out, which sends
+ * the page to sign-in instead of waiting forever.
+ */
+async function loadViewer() {
+  const v = await mgpl.auth.viewer();
+  if (v) return v;
+  const again = (await mgpl.session.refresh().catch(() => false)) ? await mgpl.auth.viewer() : null;
+  if (!again) mgpl.session.signOut("expired");
+  return again;
+}
+
 /** Signed-in area: checks the session, loads the viewer once, then draws the shell. */
 export function AppFrame({ children }: { children: ReactNode }) {
   const snapshot = useSession();
@@ -33,7 +46,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
     if (snapshot && !signedIn) router.replace(pathname === "/" ? "/login" : `/login?next=${encodeURIComponent(pathname)}`);
   }, [snapshot, signedIn, router, pathname]);
 
-  const viewer = useQuery({ queryKey: ["mgpl", "viewer"], queryFn: () => mgpl.auth.viewer(), enabled: signedIn, staleTime: 60_000 });
+  const viewer = useQuery({ queryKey: ["mgpl", "viewer"], queryFn: loadViewer, enabled: signedIn, staleTime: 60_000 });
 
   if (!signedIn || viewer.isPending) return <Center mih="100dvh"><Loader size="sm" aria-label="Loading" /></Center>;
   if (viewer.isError) return <Center mih="100dvh" p="md"><QueryError error={viewer.error} retry={() => viewer.refetch()} /></Center>;
