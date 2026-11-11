@@ -99,6 +99,7 @@ interface PatientHistory {
 
 function PatientDrawer({ id, onClose }: { id: string | null; onClose: () => void }) {
   const { can } = useViewer();
+  const [editing, setEditing] = useState(false);
   const q = useQuery({
     queryKey: ["mgpl", "patients", "history", id],
     enabled: !!id,
@@ -118,6 +119,12 @@ function PatientDrawer({ id, onClose }: { id: string | null; onClose: () => void
       {q.isError && <QueryError error={q.error} />}
       {p && (
         <Stack gap="lg">
+          {can("patient:update") && (
+            <Group justify="flex-end">
+              <Button size="xs" variant="default" onClick={() => setEditing(true)}>Edit details</Button>
+            </Group>
+          )}
+          {editing && <EditPatient patient={p} onClose={() => setEditing(false)} />}
           <SimpleGrid cols={2} spacing="sm">
             <Field label="UHID" value={p.uhid} mono />
             <Field label="Sex and age" value={`${humanize(p.sex)}${p.ageYears != null ? `, ${p.ageYears} y` : ""}`} />
@@ -165,6 +172,52 @@ function PatientDrawer({ id, onClose }: { id: string | null; onClose: () => void
         </Stack>
       )}
     </Drawer>
+  );
+}
+
+/** Change a patient's details (name, sex, age, phone, email). The api capitalises names and audits the change. */
+function EditPatient({ patient, onClose }: { patient: { id: string; title: string | null; name: string; sex: string; ageYears: number | null; phone: string | null; email: string | null }; onClose: () => void }) {
+  const form = useForm({
+    initialValues: { branchId: "-", title: patient.title ?? "", name: patient.name, sex: patient.sex, ageYears: (patient.ageYears ?? "") as number | "", phone: patient.phone ?? "", email: patient.email ?? "" },
+    validate: zod4Resolver(patientSchema),
+  });
+  const update = useAction((input: Gql.UpdatePatientInput) => mgpl.patients.update(patient.id, input), {
+    success: (p) => `${p.name} updated`,
+    refresh: [["mgpl", "patients"], ["mgpl", "bookings"]],
+    onDone: onClose,
+  });
+  return (
+    <Modal opened onClose={onClose} title={`Edit ${patient.name}`} size="lg">
+      <form
+        onSubmit={form.onSubmit((v) =>
+          update.mutate({
+            name: v.name.trim(), sex: v.sex as Gql.Sex, title: v.title || undefined,
+            ageYears: v.ageYears === "" ? undefined : v.ageYears, phone: v.phone || undefined, email: v.email || undefined,
+          }),
+        )}
+      >
+        <Stack>
+          <Group grow align="flex-start" wrap="nowrap">
+            <Select label="Title" data={["Mr", "Mrs", "Ms", "Master", "Baby", "Dr"]} clearable maw={120} {...form.getInputProps("title")} />
+            <TextInput label="Full name" data-autofocus {...form.getInputProps("name")} />
+          </Group>
+          <Stack gap={4}>
+            <Text size="sm" fw={500}>Sex</Text>
+            <SegmentedControl data={[{ value: "female", label: "Female" }, { value: "male", label: "Male" }, { value: "other", label: "Other" }]} {...form.getInputProps("sex")} />
+          </Stack>
+          <Group grow align="flex-start">
+            <NumberInput label="Age in years" min={0} max={130} allowDecimal={false} {...form.getInputProps("ageYears")} />
+            <TextInput label="Mobile" inputMode="numeric" maxLength={10} {...form.getInputProps("phone")} />
+          </Group>
+          <TextInput label="Email" type="email" {...form.getInputProps("email")} />
+          <Text size="xs" c="dimmed">Reports and bills already printed keep the old details until printed again.</Text>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={onClose}>Cancel</Button>
+            <Button type="submit" loading={update.isPending}>Save changes</Button>
+          </Group>
+        </Stack>
+      </form>
+    </Modal>
   );
 }
 

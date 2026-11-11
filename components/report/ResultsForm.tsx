@@ -26,9 +26,23 @@ export function ResultsForm({ report, sex, onSaved, onCancel }: { report: Report
   const test = useQuery({ queryKey: ["mgpl", "catalog", "test", report.testCode, sex], queryFn: () => mgpl.catalog.test(report.testCode, sex), staleTime: 30 * 60_000 });
   if (test.isPending) return <Loader size="sm" />;
   if (!test.data) return <Text size="sm" c="dimmed">This test isn&apos;t in the catalog, so there&apos;s no form for it. Ask the admin to add it.</Text>;
-  const params = test.data.parameters.filter((p) => p.name && p.type !== "title" && p.type !== "image");
+  // interpretation / clinical significance / notes print under the test: shown, never entered
+  const params = test.data.parameters.filter((p) => p.name && p.type !== "title" && p.type !== "image" && !p.narrative);
+  const notes = test.data.parameters.filter((p) => p.narrative && p.referenceText).map((p) => p.referenceText!.trim());
   if (!params.length) return <Text size="sm" c="dimmed">This test has no parameters to enter.</Text>;
-  return <Entry report={report} params={params} onSaved={onSaved} onCancel={onCancel} />;
+  return (
+    <Stack gap="sm">
+      <Entry report={report} params={params} onSaved={onSaved} onCancel={onCancel} />
+      {notes.length > 0 && (
+        <Stack gap={6} p="sm" bg="var(--mantine-color-default-hover)" style={{ borderRadius: 8 }}>
+          <Text size="xs" fw={600} c="dimmed">Printed under the test</Text>
+          {notes.map((n, k) => (
+            <Text key={k} size="xs" c="dimmed" style={{ whiteSpace: "pre-line" }} lineClamp={6}>{n}</Text>
+          ))}
+        </Stack>
+      )}
+    </Stack>
+  );
 }
 
 /** The api computes it on save (a formula written with parameter names; raw "pr_123" refs never resolve). */
