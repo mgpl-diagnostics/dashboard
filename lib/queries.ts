@@ -1,7 +1,7 @@
 "use client";
 // Data hooks: TanStack Query over the typed client. Keys start with "mgpl" so a sign-out clears them all
 // (clearOnSignOut) and a mutation can refresh a whole area with invalidateQueries({ queryKey: ["mgpl", area] }).
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import type { Gql } from "@mgpl-diagnostics/client";
 import { errorMessage, mgpl } from "./mgpl";
@@ -28,6 +28,29 @@ export function useInvoices(filter: { status?: Gql.InvoiceStatus; patientId?: st
 export function useDoctors(activeOnly = true) {
   const { can } = useViewer();
   return useQuery({ queryKey: ["mgpl", "doctors", activeOnly], queryFn: () => mgpl.doctors.list(activeOnly), enabled: can("doctor:read"), staleTime: 5 * 60_000 });
+}
+
+/** Partner-lab imports, newest first, 50 a page (the api pages them with a cursor). */
+export function useImports(filter: { status?: Gql.ExternalReportStatus; bookingId?: string } = {}) {
+  const { branchId, can } = useViewer();
+  const vars = { ...branchArg(branchId), ...filter };
+  return useInfiniteQuery({
+    queryKey: ["mgpl", "imports", vars],
+    queryFn: ({ pageParam }) => mgpl.imports.list({ ...vars, first: 50, ...(pageParam ? { after: pageParam } : {}) }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) => (last.pageInfo.hasNextPage ? last.pageInfo.endCursor : null),
+    enabled: can("report:import"),
+  });
+}
+
+export function useImport(id: string | null) {
+  return useQuery({ queryKey: ["mgpl", "imports", "one", id], queryFn: () => mgpl.imports.get(id!), enabled: !!id });
+}
+
+/** The partner signatory registry (signatory:read). */
+export function useSignatories(lab?: Gql.ExternalLab) {
+  const { can } = useViewer();
+  return useQuery({ queryKey: ["mgpl", "signatories", lab ?? "all"], queryFn: () => mgpl.imports.signatories(lab), enabled: can("signatory:read") });
 }
 
 /** A mutation that shows a toast, and refreshes the given areas when it works. */
