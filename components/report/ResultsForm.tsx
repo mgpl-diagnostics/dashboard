@@ -17,15 +17,22 @@ export function FlagBadge({ flag }: { flag: Gql.ResultFlag | null }) {
 /**
  * Result entry from catalog-kit's parameters (units, methods, ranges for the patient's sex). The api
  * fills unit, range and flag from the catalog, so only values are sent.
+ *
+ * Every parameter is shown. Calculated ones with a formula (indirect bilirubin, globulin, A/G ratio,
+ * eGFR…) are computed by the api on save; they can still be typed to override. Calculated ones without a
+ * formula (CBC indices and absolute counts: the analyzer computes them) are entered like any value.
  */
 export function ResultsForm({ report, sex, onSaved, onCancel }: { report: Report; sex: Gql.Sex | undefined; onSaved: () => void; onCancel: () => void }) {
   const test = useQuery({ queryKey: ["mgpl", "catalog", "test", report.testCode, sex], queryFn: () => mgpl.catalog.test(report.testCode, sex), staleTime: 30 * 60_000 });
   if (test.isPending) return <Loader size="sm" />;
   if (!test.data) return <Text size="sm" c="dimmed">This test isn&apos;t in the catalog, so there&apos;s no form for it. Ask the admin to add it.</Text>;
-  const params = test.data.parameters.filter((p) => p.name && p.type !== "title" && p.type !== "image" && !p.calculated);
+  const params = test.data.parameters.filter((p) => p.name && p.type !== "title" && p.type !== "image");
   if (!params.length) return <Text size="sm" c="dimmed">This test has no parameters to enter.</Text>;
   return <Entry report={report} params={params} onSaved={onSaved} onCancel={onCancel} />;
 }
+
+/** The api computes it on save (a formula written with parameter names; raw "pr_123" refs never resolve). */
+const autoCalc = (p: Gql.CatalogParameter) => !!p.calculated && !!p.formulaText && !/pr_\d+/.test(p.formulaText);
 
 function Entry({ report, params, onSaved, onCancel }: { report: Report; params: Gql.CatalogParameter[]; onSaved: () => void; onCancel: () => void }) {
   const existing = new Map(report.results.map((r) => [r.parameter.toLowerCase(), r.value]));
@@ -41,7 +48,14 @@ function Entry({ report, params, onSaved, onCancel }: { report: Report; params: 
   return (
     <form
       onSubmit={form.onSubmit((v) =>
-        save.mutate(params.map((p) => ({ parameter: p.name!, value: (v[p.name!] ?? "").trim() })).filter((r) => r.value !== "")),
+        save.mutate(
+          params
+            // a calculated value is sent only when typed here; otherwise the api recomputes it from the inputs,
+            // so correcting an input never leaves an old calculated value behind
+            .filter((p) => !autoCalc(p) || form.isDirty(p.name!))
+            .map((p) => ({ parameter: p.name!, value: (v[p.name!] ?? "").trim() }))
+            .filter((r) => r.value !== ""),
+        ),
       )}
     >
       <Stack gap="sm">
@@ -58,12 +72,23 @@ function Entry({ report, params, onSaved, onCancel }: { report: Report; params: 
             <Table.Tbody>
               {params.map((p) => (
                 <Table.Tr key={p.name}>
-                  <Table.Td><Text size="sm">{p.name}</Text>{p.method && <Text size="xs" c="dimmed">{p.method}</Text>}</Table.Td>
+                  <Table.Td>
+                    <Text size="sm">{p.name}</Text>
+                    {p.method && <Text size="xs" c="dimmed">{p.method}</Text>}
+                    {autoCalc(p) && <Text size="xs" c="dimmed">= {p.formulaText}</Text>}
+                  </Table.Td>
                   <Table.Td>
                     {p.type === "options" && p.options?.length ? (
                       <Select size="xs" aria-label={p.name!} data={p.options} clearable allowDeselect {...form.getInputProps(p.name!)} />
                     ) : (
-                      <TextInput size="xs" aria-label={p.name!} inputMode={p.type === "numeric" ? "decimal" : "text"} ff={p.type === "numeric" ? "monospace" : undefined} {...form.getInputProps(p.name!)} />
+                      <TextInput
+                        size="xs"
+                        aria-label={p.name!}
+                        inputMode={p.type === "numeric" ? "decimal" : "text"}
+                        ff={p.type === "numeric" ? "monospace" : undefined}
+                        placeholder={autoCalc(p) ? "Calculated on save" : undefined}
+                        {...form.getInputProps(p.name!)}
+                      />
                     )}
                   </Table.Td>
                   <Table.Td><Text size="xs" c="dimmed">{p.unit ?? ""}</Text></Table.Td>
