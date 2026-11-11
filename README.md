@@ -22,7 +22,7 @@ The menu, the "Waiting on you" list and every button follow the signed-in user's
 
 ## Pages
 
-Today · Patients · Bookings (book and bill in one step with the money taken at the counter; edit a booking's doctor, collection, notes and tests, with samples and the bill following) · Samples · Reports · Partner imports (upload a Hy Patho / Clinova PDF, match it to a booking,
+Today · Patients · Bookings (book and bill in one step with the money taken at the counter; edit a booking's doctor, collection, notes and tests, with samples and the bill following) · Samples · Reports · Partner imports (upload a Hy Patho / Clinova PDF; it is matched on its own when one booking clearly fits, otherwise pick from the bookings it fits by name, sex, age and booked tests;
 map its tests to ours, apply as entered results, name unknown signatures; the partner signatory registry) · Invoices · Accounts (P&L, balance sheet, trial balance, receivables, day book, cash book, ledgers with statements, GST; post or cancel vouchers by hand) · GST (GSTR-1 sections and GSTR-3B for a month with their CSV
 files, effective-dated tax rules per category or item code, the finance settings in force and the verify-with-CA list) · B2B customers (hospitals, insurers, TPAs, corporates: credit terms,
 statements, ageing, credit invoices, credit notes; Credit note on an invoice) · Bank (import the CSV statement, match automatically

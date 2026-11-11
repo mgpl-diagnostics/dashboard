@@ -79,7 +79,8 @@ function UploadButton({ onUploaded }: { onUploaded: (r: Gql.ExternalReport) => v
     try {
       const r = await mgpl.imports.upload(await fileToBase64(file), { fileName: file.name, ...(workBranchId ? { branchId: workBranchId } : {}) });
       await qc.invalidateQueries({ queryKey: ["mgpl", "imports"] });
-      notifications.show({ color: "tulsi", message: `Read ${r.tests.length} ${r.tests.length === 1 ? "test" : "tests"} from ${r.labName}` });
+      const read = `Read ${r.tests.length} ${r.tests.length === 1 ? "test" : "tests"} from ${r.labName}`;
+      notifications.show({ color: "tulsi", message: r.booking ? `${read}. It fits booking ${r.booking.bookingNo}: check the tests and apply` : read });
       onUploaded(r);
     } catch (err) {
       notifications.show({ color: "red", title: "Couldn't read the PDF", message: importErrorMessage(err) });

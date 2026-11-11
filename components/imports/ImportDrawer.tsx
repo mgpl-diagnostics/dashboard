@@ -105,6 +105,8 @@ function ImportBody({ ext }: { ext: Gql.ExternalReport }) {
 /** Picks the booking this PDF belongs to; the api compares name, sex and age (±1 year). */
 function MatchBooking({ ext }: { ext: Gql.ExternalReport }) {
   const bookings = useBookings({ limit: 200 });
+  // the api's suggestions (name, sex, age, booked tests); an older api without them shows the picker only
+  const candidates = useQuery({ queryKey: ["mgpl", "imports", "candidates", ext.id, ext.booking?.id ?? null], queryFn: () => mgpl.imports.candidates(ext.id), retry: false });
   const [picked, setPicked] = useState<string | null>(ext.booking?.id ?? null);
   const match = useAction((bookingId: string) => mgpl.imports.match(ext.id, bookingId), {
     refresh: REFRESH,
@@ -118,12 +120,37 @@ function MatchBooking({ ext }: { ext: Gql.ExternalReport }) {
     return [...list].sort((a, b) => near(a) - near(b)).map((b) => ({ value: b.id, label: `${b.bookingNo} · ${b.patient.name} · ${b.tests.map((t) => t.testCode).join(", ")}` }));
   }, [bookings.data, ext.patient.name]);
 
+  const found = (candidates.data ?? []).filter((c) => c.score > 0);
   return (
     <Card padding="md">
       <Title order={3} mb="xs">{ext.booking ? "Matched booking" : "Which booking is this?"}</Title>
+      {found.length > 0 && (
+        <Stack gap="xs" mb="sm">
+          <Text size="sm" c="dimmed">{ext.booking ? "Other bookings it could belong to" : "Bookings it fits, best first"}</Text>
+          {found.map((c) => {
+            const current = c.booking.id === ext.booking?.id;
+            return (
+              <Group key={c.booking.id} justify="space-between" wrap="nowrap" align="flex-start">
+                <Stack gap={2} style={{ minWidth: 0 }}>
+                  <Group gap={6} wrap="wrap">
+                    <Text size="sm" ff="monospace" style={{ whiteSpace: "nowrap" }}>{c.booking.bookingNo}</Text>
+                    <Text size="sm" fw={500}>{c.booking.patient.name}</Text>
+                    {c.strong && <Badge size="sm" color="tulsi" variant="light">Fits</Badge>}
+                  </Group>
+                  <Text size="xs" c="dimmed">{[c.booking.tests.map((t) => t.testCode).join(", "), ...c.reasons].join(" · ")}</Text>
+                  {c.patientMismatches.map((m) => <Text key={m} size="xs" c="orange">{m}</Text>)}
+                </Stack>
+                <Button size="compact-sm" variant={c.strong && !current ? "filled" : "light"} disabled={current} loading={match.isPending && match.variables === c.booking.id} onClick={() => match.mutate(c.booking.id)}>
+                  {current ? "Matched" : "Match"}
+                </Button>
+              </Group>
+            );
+          })}
+        </Stack>
+      )}
       <Group align="flex-end" gap="xs" wrap="wrap">
         <Select
-          label="Booking"
+          label={found.length ? "Or pick another booking" : "Booking"}
           placeholder={bookings.isPending ? "Loading bookings" : "Booking no or patient"}
           searchable
           data={data}
