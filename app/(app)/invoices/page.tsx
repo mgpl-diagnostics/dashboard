@@ -18,11 +18,11 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { IssueCreditNote } from "@/components/receivables/CreditNoteDrawer";
 import { dateTime, humanize, rupees, toPaise } from "@/lib/format";
 import { errorMessage, mgpl } from "@/lib/mgpl";
+import { PAYMENT_MODE_OPTIONS } from "@/lib/payments";
 import { useAction, useInvoices } from "@/lib/queries";
 import { tableLook, useTable } from "@/lib/table";
 import { useViewer } from "@/lib/viewer";
 
-const MODES: Gql.PaymentMode[] = ["cash", "upi", "card", "netbanking", "wallet", "cheque", "insurance"];
 
 export default function InvoicesPage() {
   return (
@@ -217,7 +217,7 @@ function PaymentModal({ invoice, kind, onClose }: { invoice: Gql.Invoice; kind: 
       <form onSubmit={form.onSubmit((v) => pay.mutate({ ...v, amount: Number(v.amount) }))}>
         <Stack>
           <NumberInput label="Amount (Rs)" min={0} max={max} decimalScale={2} thousandSeparator="," data-autofocus {...form.getInputProps("amount")} />
-          <Select label="Mode" data={MODES.map((m) => ({ value: m, label: humanize(m) }))} {...form.getInputProps("mode")} />
+          <Select label="Mode" data={PAYMENT_MODE_OPTIONS} {...form.getInputProps("mode")} />
           <TextInput label="Reference" description="UPI ref, card slip or cheque number" {...form.getInputProps("reference")} />
           <Group justify="flex-end">
             <Button variant="default" onClick={onClose}>Cancel</Button>

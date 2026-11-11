@@ -1,8 +1,9 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 import { Alert, Button, Drawer, Group, Loader, SimpleGrid, Stack, Table, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { ReceiptIcon } from "@phosphor-icons/react";
+import { PencilSimpleIcon, ReceiptIcon } from "@phosphor-icons/react";
 import { Field } from "@/components/Field";
 import { QueryError } from "@/components/QueryError";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -11,12 +12,16 @@ import { dateTime, humanize, rupees } from "@/lib/format";
 import { mgpl } from "@/lib/mgpl";
 import { useAction, useBooking } from "@/lib/queries";
 import { useViewer } from "@/lib/viewer";
+import { EditBooking } from "./EditBooking";
+
+const EDITABLE = new Set(["booked", "sample_collected", "in_process"]);
 
 /** One booking: tests, samples (with their tube caps), reports and the bill, with the actions the role allows. */
 export function BookingDrawer({ id, onClose }: { id: string | null; onClose: () => void }) {
   const { can } = useViewer();
   const q = useBooking(id);
   const b = q.data;
+  const [editing, setEditing] = useState(false);
   const refresh = [["mgpl", "bookings"], ["mgpl", "invoices"]];
   const cancel = useAction((bid: string) => mgpl.bookings.cancel(bid), { success: "Booking cancelled", refresh });
   const bill = useAction(
@@ -100,19 +105,23 @@ export function BookingDrawer({ id, onClose }: { id: string | null; onClose: () 
 
           <Stack gap="xs">
             <Title order={3}>Bill</Title>
-            {b.invoice ? (
-              <Group justify="space-between">
-                <Stack gap={0}>
-                  <Text size="sm" ff="monospace" style={{ whiteSpace: "nowrap" }}>{b.invoice.invoiceNo}</Text>
-                  <Text size="xs" c={b.invoice.duePaise > 0 ? "red" : "dimmed"} className="figure">
-                    {rupees(b.invoice.totalPaise)}{b.invoice.duePaise > 0 ? `, ${rupees(b.invoice.duePaise)} due` : ", paid"}
-                  </Text>
-                </Stack>
-                <Group gap="xs">
-                  <StatusBadge status={b.invoice.status} />
-                  {can("invoice:read") && <Button component={Link} href={`/invoices?id=${b.invoice.id}`} size="compact-sm" variant="light">Open</Button>}
-                </Group>
-              </Group>
+            {(b.invoices ?? []).length > 0 ? (
+              <Stack gap="xs">
+                {b.invoices.map((i) => (
+                  <Group key={i.id} justify="space-between" opacity={i.status === "cancelled" ? 0.55 : 1}>
+                    <Stack gap={0}>
+                      <Text size="sm" ff="monospace" style={{ whiteSpace: "nowrap" }} td={i.status === "cancelled" ? "line-through" : undefined}>{i.invoiceNo}</Text>
+                      <Text size="xs" c={i.status !== "cancelled" && i.duePaise > 0 ? "red" : "dimmed"} className="figure">
+                        {rupees(i.totalPaise)}{i.status === "cancelled" ? "" : i.duePaise > 0 ? `, ${rupees(i.duePaise)} due` : ", paid"}
+                      </Text>
+                    </Stack>
+                    <Group gap="xs">
+                      <StatusBadge status={i.status} />
+                      {can("invoice:read") && <Button component={Link} href={`/invoices?id=${i.id}`} size="compact-sm" variant="light">Open</Button>}
+                    </Group>
+                  </Group>
+                ))}
+              </Stack>
             ) : can("invoice:create") && b.status !== "cancelled" ? (
               <Button
                 leftSection={<ReceiptIcon size={16} />}
@@ -127,8 +136,12 @@ export function BookingDrawer({ id, onClose }: { id: string | null; onClose: () 
             )}
           </Stack>
 
-          {can("booking:cancel") && b.status !== "cancelled" && b.status !== "completed" && (
+          {((can("booking:update") && EDITABLE.has(b.status)) || (can("booking:cancel") && b.status !== "cancelled" && b.status !== "completed")) && (
             <Group justify="flex-end">
+              {can("booking:update") && EDITABLE.has(b.status) && (
+                <Button variant="light" leftSection={<PencilSimpleIcon size={16} />} onClick={() => setEditing(true)}>Edit booking</Button>
+              )}
+              {can("booking:cancel") && b.status !== "cancelled" && b.status !== "completed" && (
               <Button
                 color="red"
                 variant="subtle"
@@ -145,8 +158,10 @@ export function BookingDrawer({ id, onClose }: { id: string | null; onClose: () 
               >
                 Cancel booking
               </Button>
+              )}
             </Group>
           )}
+          {editing && <EditBooking booking={b} onClose={() => setEditing(false)} />}
         </Stack>
       )}
     </Drawer>
