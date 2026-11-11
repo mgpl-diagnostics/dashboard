@@ -1,6 +1,6 @@
 {
   "name": "@mgpl-diagnostics/dashboard",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "description": "MGPL Diagnostics staff dashboard: one Next.js app for every role (owner, admin, branch manager, front desk, phlebotomist, technician, pathologist, accountant, referring doctor) on the GraphQL api.",
   "scripts": {

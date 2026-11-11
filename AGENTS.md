@@ -11,12 +11,13 @@ app/(auth)/              sign-in, password reset (no shell)
 app/(app)/               signed-in pages, one folder per menu item; layout.tsx mounts AppFrame
 components/AppFrame.tsx  session check → viewer → AppShell (header, role-filtered sidebar, Spotlight, branch picker)
 components/SmoothScroll.tsx  GSAP ScrollSmoother around the content column
-components/booking/ report/ imports/ settlements/  drawers and forms shared by several pages
+components/booking/ report/ imports/ settlements/ receivables/  drawers and forms shared by several pages
 lib/mgpl.ts              THE client (@mgpl-diagnostics/client): session manager in cookie mode (httpOnly cookies, no token in JS), refresh, device signals
 lib/access.ts            menu, role names, permission matching (mirrors auth-kit's rbac.ts)
 lib/viewer.tsx           viewer context: can(permission), branches, picked branch
 lib/queries.ts           TanStack Query hooks + useAction (mutation + toast + refresh)
 lib/imports.ts           partner-lab import labels and error messages (api docs/18-imports.md)
+lib/receivables.ts       customer kinds and ageing buckets
 lib/settlements.ts       settlement labels, months, basis points and percent
 lib/reports.ts           report calls with a selection that works with every api version
 lib/table.ts             client-side sort/filter/paging for mantine-datatable
