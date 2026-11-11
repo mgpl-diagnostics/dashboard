@@ -17,13 +17,14 @@ The menu, the "Waiting on you" list and every button follow the signed-in user's
 | Phlebotomist | Samples, "To collect" | collect samples by barcode, home visits |
 | Lab technician | Samples, "To receive"; Reports, "To enter" | receive or reject samples, enter results, import partner-lab PDFs |
 | Pathologist | Reports, "To verify" | verify, release, amend, print reports; import partner-lab PDFs and name partner signatures |
-| Accountant | Accounts | P&L, trial balance, receivables ageing, day book, GST, CSV exports, refunds |
+| Accountant | Accounts | P&L, trial balance, receivables ageing, day book, GST, CSV exports, refunds, partner settlements |
 | Referring doctor | Today, then Patients | look up their patients (reading reports needs an api query that doctors may call; see the PR) |
 
 ## Pages
 
 Today · Patients · Bookings · Samples · Reports · Partner imports (upload a Hy Patho / Clinova PDF, match it to a booking,
-map its tests to ours, apply as entered results, name unknown signatures; the partner signatory registry) · Invoices · Accounts · Doctors · Users and roles ·
+map its tests to ours, apply as entered results, name unknown signatures; the partner signatory registry) · Invoices · Accounts · Settlements (collection centres and franchises:
+partners, agreements, monthly settlement with deductions and TDS, accrue, pay, CSV) · Doctors · Users and roles ·
 Branches · Audit log · Updates (owner and admin: new releases, what changed, how to update) · My account (password, signed-in devices). Ctrl K (or /) opens search for pages and actions.
 
 ## Stack

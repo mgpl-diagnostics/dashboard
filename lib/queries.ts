@@ -53,6 +53,18 @@ export function useSignatories(lab?: Gql.ExternalLab) {
   return useQuery({ queryKey: ["mgpl", "signatories", lab ?? "all"], queryFn: () => mgpl.imports.signatories(lab), enabled: can("signatory:read") });
 }
 
+/** Collection centres and franchises (finance-kit settlements). */
+export function usePartners() {
+  const { branchId, can } = useViewer();
+  return useQuery({ queryKey: ["mgpl", "partners", branchId], queryFn: () => mgpl.settlements.partners(branchId ?? undefined), enabled: can("accounts:read") });
+}
+
+export function useSettlements(filter: { status?: Gql.SettlementStatus; partnerId?: string } = {}) {
+  const { branchId, can } = useViewer();
+  const vars = { ...branchArg(branchId), ...filter, limit: 200 };
+  return useQuery({ queryKey: ["mgpl", "settlements", vars], queryFn: () => mgpl.settlements.list(vars), enabled: can("accounts:read") });
+}
+
 /** A mutation that shows a toast, and refreshes the given areas when it works. */
 export function useAction<V, R>(fn: (v: V) => Promise<R>, o: { success?: string | ((r: R) => string); refresh?: string[][]; onDone?: (r: R) => void } = {}) {
   const qc = useQueryClient();

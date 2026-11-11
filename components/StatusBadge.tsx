@@ -10,6 +10,7 @@ const COLOR: Record<string, string> = {
   active: "tulsi", disabled: "red", invited: "yellow",
   posted: "tulsi",
   extracted: "saffron", matched: "navy", applied: "tulsi",
+  accrued: "saffron",
 };
 
 export function StatusBadge({ status }: { status: string }) {
