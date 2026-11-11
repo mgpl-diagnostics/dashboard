@@ -17,13 +17,13 @@ The menu, the "Waiting on you" list and every button follow the signed-in user's
 | Phlebotomist | Samples, "To collect" | collect samples by barcode, home visits |
 | Lab technician | Samples, "To receive"; Reports, "To enter" | receive or reject samples, enter results, import partner-lab PDFs |
 | Pathologist | Reports, "To verify" | verify, release, amend, print reports; import partner-lab PDFs and name partner signatures |
-| Accountant | Accounts | P&L, trial balance, receivables ageing, day book, GST, CSV exports, refunds, B2B customers and credit notes, partner settlements |
+| Accountant | Accounts | P&L, balance sheet, trial balance, cash book, ledgers, vouchers by hand, receivables ageing, day book, GST, CSV exports, refunds, B2B customers and credit notes, partner settlements |
 | Referring doctor | Today, then Patients | look up their patients (reading reports needs an api query that doctors may call; see the PR) |
 
 ## Pages
 
 Today · Patients · Bookings · Samples · Reports · Partner imports (upload a Hy Patho / Clinova PDF, match it to a booking,
-map its tests to ours, apply as entered results, name unknown signatures; the partner signatory registry) · Invoices · Accounts · B2B customers (hospitals, insurers, TPAs, corporates: credit terms,
+map its tests to ours, apply as entered results, name unknown signatures; the partner signatory registry) · Invoices · Accounts (P&L, balance sheet, trial balance, receivables, day book, cash book, ledgers with statements, GST; post or cancel vouchers by hand) · B2B customers (hospitals, insurers, TPAs, corporates: credit terms,
 statements, ageing, credit invoices, credit notes; Credit note on an invoice) · Settlements (collection centres and franchises:
 partners, agreements, monthly settlement with deductions and TDS, accrue, pay, CSV) · Doctors · Users and roles ·
 Branches · Audit log · Updates (owner and admin: new releases, what changed, how to update) · My account (password, signed-in devices). Ctrl K (or /) opens search for pages and actions.

@@ -11,7 +11,7 @@ app/(auth)/              sign-in, password reset (no shell)
 app/(app)/               signed-in pages, one folder per menu item; layout.tsx mounts AppFrame
 components/AppFrame.tsx  session check → viewer → AppShell (header, role-filtered sidebar, Spotlight, branch picker)
 components/SmoothScroll.tsx  GSAP ScrollSmoother around the content column
-components/booking/ report/ imports/ settlements/ receivables/  drawers and forms shared by several pages
+components/booking/ report/ imports/ settlements/ receivables/ books/  drawers and forms shared by several pages
 lib/mgpl.ts              THE client (@mgpl-diagnostics/client): session manager in cookie mode (httpOnly cookies, no token in JS), refresh, device signals
 lib/access.ts            menu, role names, permission matching (mirrors auth-kit's rbac.ts)
 lib/viewer.tsx           viewer context: can(permission), branches, picked branch
