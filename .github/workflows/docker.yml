@@ -1,0 +1,32 @@
+name: Docker
+
+# Builds the image on every PR and on main without pushing, to catch Dockerfile bugs before a release,
+# then starts it and asks for /login (the same request as the image's HEALTHCHECK).
+# Pushing to GHCR stays in release.yml (v* tag or manual run on main). The build itself lives in
+# mgpl-diagnostics/.github (.github/workflows/docker-build.yml), shared with the api.
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**.md", "docs/**", "LICENSE"]
+  pull_request:
+    paths-ignore: ["**.md", "docs/**", "LICENSE"]
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  docker:
+    uses: mgpl-diagnostics/.github/.github/workflows/docker-build.yml@main
+    with:
+      smoke: |
+        docker run -d --name dashboard -p 3000:3000 "$IMAGE"
+        for i in $(seq 1 30); do
+          if curl -fsS -o /dev/null http://127.0.0.1:3000/login; then echo "dashboard image serves /login"; docker rm -f dashboard; exit 0; fi
+          sleep 1
+        done
+        docker logs dashboard; exit 1
