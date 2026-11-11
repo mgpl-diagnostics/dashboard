@@ -82,7 +82,7 @@ function ImportButton({ ledgerId }: { ledgerId: string }) {
 function Reconciliation({ ledgerId }: { ledgerId: string }) {
   const asOf = dayjs().tz(IST).endOf("day").toISOString();
   const brs = useQuery({ queryKey: ["mgpl", "bank", "brs", ledgerId, asOf.slice(0, 10)], queryFn: () => mgpl.bank.reconciliation(ledgerId, asOf) });
-  const [status, setStatus] = useState<Gql.BankLineStatus>("unmatched");
+  const [status, setStatus] = useState<Gql.BankLineStatus | "statements">("unmatched");
   const r = brs.data;
   return (
     <Stack gap="md" data-enter>
@@ -108,9 +108,32 @@ function Reconciliation({ ledgerId }: { ledgerId: string }) {
           {r.differencePaise !== 0 ? " Match or post the lines below." : ""}
         </Alert>
       )}
-      <SegmentedControl value={status} onChange={(v) => setStatus(v as Gql.BankLineStatus)} data={[{ value: "unmatched", label: "To match" }, { value: "matched", label: "Matched" }, { value: "ignored", label: "Ignored" }]} w="fit-content" />
-      <Lines ledgerId={ledgerId} status={status} entries={r?.unreconciledEntries ?? []} />
+      <SegmentedControl value={status} onChange={(v) => setStatus(v as Gql.BankLineStatus | "statements")} data={[{ value: "unmatched", label: "To match" }, { value: "matched", label: "Matched" }, { value: "ignored", label: "Ignored" }, { value: "statements", label: "Statements" }]} w="fit-content" />
+      {status === "statements" ? <Statements ledgerId={ledgerId} /> : <Lines ledgerId={ledgerId} status={status} entries={r?.unreconciledEntries ?? []} />}
     </Stack>
+  );
+}
+
+/** The CSV files imported for this account: period, balances per the bank and how many lines each added. */
+function Statements({ ledgerId }: { ledgerId: string }) {
+  const q = useQuery({ queryKey: ["mgpl", "bank", "statements", ledgerId], queryFn: () => mgpl.bank.statements({ ledgerId, limit: 200 }) });
+  const table = useTable(q.data, { sortBy: "createdAt", direction: "desc", pageSize: 25 });
+  if (q.isError) return <QueryError error={q.error} retry={() => q.refetch()} />;
+  return (
+    <DataTable<Gql.BankStatement>
+      {...tableLook}
+      {...table}
+      fetching={q.isPending}
+      noRecordsText="No statement imported yet"
+      columns={[
+        { accessor: "createdAt", title: "Imported", sortable: true, render: (s) => <><Text size="sm" style={{ whiteSpace: "nowrap" }}>{date(s.createdAt)}</Text><Text size="xs" c="dimmed" lineClamp={1} maw={220}>{s.fileName ?? ""}</Text></> },
+        { accessor: "from", title: "Period", render: (s) => <Text size="sm" style={{ whiteSpace: "nowrap" }}>{s.from ? `${date(s.from)} to ${date(s.to)}` : "–"}</Text> },
+        { accessor: "openingPaise", title: "Opening", textAlign: "right", visibleMediaQuery: (t) => `(min-width: ${t.breakpoints.md})`, render: (s) => <Text size="sm" className="figure">{rupees(s.openingPaise)}</Text> },
+        { accessor: "closingPaise", title: "Closing", textAlign: "right", visibleMediaQuery: (t) => `(min-width: ${t.breakpoints.sm})`, render: (s) => <Text size="sm" className="figure">{rupees(s.closingPaise)}</Text> },
+        { accessor: "lineCount", title: "Lines", textAlign: "right", render: (s) => <Text size="sm" className="figure">{s.lineCount}</Text> },
+        { accessor: "branch.name", title: "Branch", visibleMediaQuery: (t) => `(min-width: ${t.breakpoints.lg})` },
+      ]}
+    />
   );
 }
 
