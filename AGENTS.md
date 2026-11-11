@@ -9,6 +9,7 @@ front desk, phlebotomist, technician, pathologist, accountant, referring doctor)
 ```
 app/(auth)/              sign-in, password reset (no shell)
 app/(app)/               signed-in pages, one folder per menu item; layout.tsx mounts AppFrame
+app/r/[token]/           the patient's page behind the QR on reports and bills (public, no shell, no Referer)
 components/AppFrame.tsx  session check → viewer → AppShell (header, role-filtered sidebar, Spotlight, branch picker)
 components/SmoothScroll.tsx  GSAP ScrollSmoother around the content column
 components/booking/ report/ imports/ settlements/ receivables/ books/  drawers and forms shared by several pages
@@ -51,7 +52,8 @@ Dockerfile               standalone image; .github/workflows/release.yml publish
 7. **Responsive**: check 390 px and 1440 px. Tables hide secondary columns with `visibleMediaQuery`;
    nothing scrolls the page sideways.
 8. **No token in JavaScript.** Sessions are httpOnly cookies set by the api (`cookies: true` in `lib/mgpl.ts`).
-   Never read, store or log a token, and never put one in localStorage, sessionStorage or a URL.
+   Never read, store or log a token, and never put one in localStorage, sessionStorage or a URL. (A patient link's
+   token in `/r/<token>` is not a session: it opens one booking read-only, and that page sends no Referer.)
 9. Never commit tokens, `.env` files, patient data or real signatures. Samples are fictional.
 
 ## Commands

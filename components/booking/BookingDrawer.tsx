@@ -13,6 +13,7 @@ import { mgpl } from "@/lib/mgpl";
 import { useAction, useBooking } from "@/lib/queries";
 import { useViewer } from "@/lib/viewer";
 import { EditBooking } from "./EditBooking";
+import { PatientLink } from "./PatientLink";
 
 const EDITABLE = new Set(["booked", "sample_collected", "in_process"]);
 
@@ -135,6 +136,8 @@ export function BookingDrawer({ id, onClose }: { id: string | null; onClose: () 
               <Text size="sm" c="dimmed">Not billed yet</Text>
             )}
           </Stack>
+
+          <PatientLink booking={b} />
 
           {((can("booking:update") && EDITABLE.has(b.status)) || (can("booking:cancel") && b.status !== "cancelled" && b.status !== "completed")) && (
             <Group justify="flex-end">
