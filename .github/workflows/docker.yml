@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   docker:
-    uses: mgpl-diagnostics/.github/.github/workflows/docker-build.yml@claude/project-thread-dsh6g4
+    uses: mgpl-diagnostics/.github/.github/workflows/docker-build.yml@main
     with:
       smoke: |
         docker run -d --name dashboard -p 3000:3000 "$IMAGE"

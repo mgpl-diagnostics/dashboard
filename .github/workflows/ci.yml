@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # @mgpl-diagnostics/client comes from GitHub Packages. Switch to `npm ci` once package-lock.json is committed.
-      - uses: mgpl-diagnostics/.github/actions/node@claude/project-thread-dsh6g4
+      - uses: mgpl-diagnostics/.github/actions/node@main
         with:
           github-packages: "true"
           token: ${{ secrets.GITHUB_TOKEN }}
