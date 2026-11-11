@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # The job id "ci" is the required status check on main (see mgpl-diagnostics/.github scripts/protect-repos.mjs).
@@ -20,15 +20,18 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 22
-          registry-url: https://npm.pkg.github.com
-          scope: "@mgpl-diagnostics"
       # @mgpl-diagnostics/client comes from GitHub Packages. Switch to `npm ci` once package-lock.json is committed.
-      - run: npm install --no-audit --no-fund
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: mgpl-diagnostics/.github/actions/node@claude/project-thread-dsh6g4
+        with:
+          github-packages: "true"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          install: npm install --no-audit --no-fund
+      # Next.js's incremental build cache (compiled modules survive between runs)
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package.json', 'package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.css', '!node_modules/**', '!.next/**') }}
+          restore-keys: nextjs-${{ runner.os }}-${{ hashFiles('package.json', 'package-lock.json') }}-
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run build
