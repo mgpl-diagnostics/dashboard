@@ -55,6 +55,34 @@ function Samples() {
   const collect = useAction((ids: string[]) => Promise.all(ids.map((id) => mgpl.samples.collect(id))), { success: (r) => `${r.length} collected`, refresh, onDone: () => setSelected([]) });
   const receive = useAction((ids: string[]) => Promise.all(ids.map((id) => mgpl.samples.receive(id))), { success: (r) => `${r.length} received at the lab`, refresh, onDone: () => setSelected([]) });
   const reject = useAction((v: { id: string; reason: string }) => mgpl.samples.reject(v.id, v.reason), { success: "Sample rejected. Ask for a fresh one", refresh });
+  // one tube: its own pre-printed label may replace the generated barcode (unique in the lab: BARCODE_TAKEN)
+  const collectOne = useAction((v: { id: string; barcode?: string }) => mgpl.samples.collect(v.id, v.barcode), { success: (s) => `${s.barcode} collected`, refresh });
+  const relabel = useAction((v: { id: string; barcode: string }) => mgpl.samples.relabel(v.id, v.barcode), { success: (s) => `Barcode is now ${s.barcode}`, refresh });
+
+  /** Ask for the tube's label: pre-filled with the current barcode, so Enter keeps it and a scan replaces it. */
+  function askLabel(r: Row, mode: "collect" | "relabel") {
+    let label = r.barcode;
+    modals.openConfirmModal({
+      title: mode === "collect" ? `Collect ${r.sampleType}` : `New barcode for ${r.barcode}`,
+      children: (
+        <TextInput
+          label="Tube barcode"
+          description={mode === "collect" ? "Scan the tube's label, or keep the generated barcode" : "Scan or type the label on the tube"}
+          defaultValue={r.barcode}
+          ff="monospace"
+          data-autofocus
+          onFocus={(e) => e.currentTarget.select()}
+          onChange={(e) => (label = e.currentTarget.value)}
+        />
+      ),
+      labels: { confirm: mode === "collect" ? "Mark collected" : "Save barcode", cancel: "Cancel" },
+      onConfirm: () => {
+        const code = label.trim();
+        if (mode === "collect") collectOne.mutate({ id: r.id, ...(code && code !== r.barcode ? { barcode: code } : {}) });
+        else if (code && code !== r.barcode) relabel.mutate({ id: r.id, barcode: code });
+      },
+    });
+  }
 
   // A barcode scanner types the code and presses Enter.
   async function onScan() {
@@ -141,7 +169,8 @@ function Samples() {
                 accessor: "actions", title: "", textAlign: "right",
                 render: (r) => (
                   <Group gap={4} justify="flex-end" wrap="nowrap" onClick={(e) => e.stopPropagation()}>
-                    {canCollect && r.status === "pending" && <Button size="compact-xs" onClick={() => collect.mutate([r.id])}>Collect</Button>}
+                    {canCollect && r.status === "pending" && <Button size="compact-xs" onClick={() => askLabel(r, "collect")}>Collect</Button>}
+                    {canCollect && r.status === "collected" && <Button size="compact-xs" variant="subtle" leftSection={<BarcodeIcon size={12} />} onClick={() => askLabel(r, "relabel")}>Relabel</Button>}
                     {canReceive && r.status === "collected" && <Button size="compact-xs" variant="light" onClick={() => receive.mutate([r.id])}>Receive</Button>}
                     {can("sample:reject") && (r.status === "collected" || r.status === "received") && (
                       <Button size="compact-xs" variant="subtle" color="red" leftSection={<XIcon size={12} />} onClick={() => askReject(r)}>Reject</Button>

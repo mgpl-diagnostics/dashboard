@@ -10,6 +10,16 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* No visible scrollbars anywhere in the app; everything still scrolls (wheel, touch, keyboard). */
+  html,
+  body,
+  * {
+    scrollbar-width: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Figures: tabular, one format across the screen. */
   .figure {
     font-variant-numeric: tabular-nums;
