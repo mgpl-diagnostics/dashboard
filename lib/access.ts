@@ -4,7 +4,7 @@ import type { Icon } from "@phosphor-icons/react";
 import {
   SunHorizonIcon, UsersThreeIcon, CalendarCheckIcon, TestTubeIcon, FileTextIcon, ReceiptIcon,
   BookOpenTextIcon, StethoscopeIcon, UserGearIcon, BuildingsIcon, ClockCounterClockwiseIcon, UserCircleIcon, ArrowCircleUpIcon,
-  FileArrowUpIcon, HandshakeIcon, BriefcaseIcon,
+  FileArrowUpIcon, HandshakeIcon, BriefcaseIcon, BankIcon, LockKeyIcon,
 } from "@phosphor-icons/react";
 
 export interface NavItem { href: string; label: string; icon: Icon; permission?: string; group: "Work" | "Money" | "Organisation" | "You" }
@@ -19,6 +19,8 @@ export const NAV: NavItem[] = [
   { href: "/invoices", label: "Invoices", icon: ReceiptIcon, permission: "invoice:read", group: "Money" },
   { href: "/accounts", label: "Accounts", icon: BookOpenTextIcon, permission: "accounts:read", group: "Money" },
   { href: "/customers", label: "B2B customers", icon: BriefcaseIcon, permission: "accounts:read", group: "Money" },
+  { href: "/bank", label: "Bank", icon: BankIcon, permission: "accounts:read", group: "Money" },
+  { href: "/close", label: "Day close and periods", icon: LockKeyIcon, permission: "accounts:read", group: "Money" },
   { href: "/settlements", label: "Settlements", icon: HandshakeIcon, permission: "accounts:read", group: "Money" },
   { href: "/doctors", label: "Doctors", icon: StethoscopeIcon, permission: "doctor:read", group: "Organisation" },
   { href: "/users", label: "Users and roles", icon: UserGearIcon, permission: "user:read", group: "Organisation" },

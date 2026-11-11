@@ -11,6 +11,7 @@ const COLOR: Record<string, string> = {
   posted: "tulsi",
   extracted: "saffron", matched: "navy", applied: "tulsi",
   accrued: "saffron",
+  unmatched: "saffron", ignored: "gray",
 };
 
 export function StatusBadge({ status }: { status: string }) {
