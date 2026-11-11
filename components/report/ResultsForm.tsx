@@ -48,10 +48,15 @@ export function ResultsForm({ report, sex, onSaved, onCancel }: { report: Report
 /** The api computes it on save (a formula written with parameter names; raw "pr_123" refs never resolve). */
 const autoCalc = (p: Gql.CatalogParameter) => !!p.calculated && !!p.formulaText && !/pr_\d+/.test(p.formulaText);
 
+/** A flat form key for the i-th parameter (see Entry). */
+const fieldKey = (i: number) => `r${i}`;
+
 function Entry({ report, params, onSaved, onCancel }: { report: Report; params: Gql.CatalogParameter[]; onSaved: () => void; onCancel: () => void }) {
   const existing = new Map(report.results.map((r) => [r.parameter.toLowerCase(), r.value]));
+  // Form keys are positions, never parameter names: @mantine/form reads a "." in a key as a path, so a name
+  // like "S.Typhi Antigen (O)" (Widal) failed to set, the select closed empty and the result was never sent.
   const form = useForm<Record<string, string>>({
-    initialValues: Object.fromEntries(params.map((p) => [p.name!, existing.get(p.name!.toLowerCase()) ?? ""])),
+    initialValues: Object.fromEntries(params.map((p, i) => [fieldKey(i), existing.get(p.name!.toLowerCase()) ?? ""])),
   });
   const save = useAction((results: Gql.ResultInput[]) => reports.saveResults(report.id, results), {
     success: "Results saved",
@@ -66,8 +71,9 @@ function Entry({ report, params, onSaved, onCancel }: { report: Report; params: 
           params
             // a calculated value is sent only when typed here; otherwise the api recomputes it from the inputs,
             // so correcting an input never leaves an old calculated value behind
-            .filter((p) => !autoCalc(p) || form.isDirty(p.name!))
-            .map((p) => ({ parameter: p.name!, value: (v[p.name!] ?? "").trim() }))
+            .map((p, i) => ({ p, key: fieldKey(i) }))
+            .filter(({ p, key }) => !autoCalc(p) || form.isDirty(key))
+            .map(({ p, key }) => ({ parameter: p.name!, value: (v[key] ?? "").trim() }))
             .filter((r) => r.value !== ""),
         ),
       )}
@@ -84,7 +90,7 @@ function Entry({ report, params, onSaved, onCancel }: { report: Report; params: 
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {params.map((p) => (
+              {params.map((p, i) => (
                 <Table.Tr key={p.name}>
                   <Table.Td>
                     <Text size="sm">{p.name}</Text>
@@ -93,7 +99,7 @@ function Entry({ report, params, onSaved, onCancel }: { report: Report; params: 
                   </Table.Td>
                   <Table.Td>
                     {p.type === "options" && p.options?.length ? (
-                      <Select size="xs" aria-label={p.name!} data={p.options} clearable allowDeselect {...form.getInputProps(p.name!)} />
+                      <Select size="xs" aria-label={p.name!} data={p.options} clearable allowDeselect {...form.getInputProps(fieldKey(i))} />
                     ) : (
                       <TextInput
                         size="xs"
@@ -101,7 +107,7 @@ function Entry({ report, params, onSaved, onCancel }: { report: Report; params: 
                         inputMode={p.type === "numeric" ? "decimal" : "text"}
                         ff={p.type === "numeric" ? "monospace" : undefined}
                         placeholder={autoCalc(p) ? "Calculated on save" : undefined}
-                        {...form.getInputProps(p.name!)}
+                        {...form.getInputProps(fieldKey(i))}
                       />
                     )}
                   </Table.Td>
