@@ -4,6 +4,7 @@ import type { Icon } from "@phosphor-icons/react";
 import {
   SunHorizonIcon, UsersThreeIcon, CalendarCheckIcon, TestTubeIcon, FileTextIcon, ReceiptIcon,
   BookOpenTextIcon, StethoscopeIcon, UserGearIcon, BuildingsIcon, ClockCounterClockwiseIcon, UserCircleIcon, ArrowCircleUpIcon,
+  FileArrowUpIcon,
 } from "@phosphor-icons/react";
 
 export interface NavItem { href: string; label: string; icon: Icon; permission?: string; group: "Work" | "Money" | "Organisation" | "You" }
@@ -14,6 +15,7 @@ export const NAV: NavItem[] = [
   { href: "/bookings", label: "Bookings", icon: CalendarCheckIcon, permission: "booking:read", group: "Work" },
   { href: "/samples", label: "Samples", icon: TestTubeIcon, permission: "sample:read", group: "Work" },
   { href: "/reports", label: "Reports", icon: FileTextIcon, permission: "report:read", group: "Work" },
+  { href: "/imports", label: "Partner imports", icon: FileArrowUpIcon, permission: "report:import", group: "Work" },
   { href: "/invoices", label: "Invoices", icon: ReceiptIcon, permission: "invoice:read", group: "Money" },
   { href: "/accounts", label: "Accounts", icon: BookOpenTextIcon, permission: "accounts:read", group: "Money" },
   { href: "/doctors", label: "Doctors", icon: StethoscopeIcon, permission: "doctor:read", group: "Organisation" },
