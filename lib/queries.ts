@@ -65,6 +65,12 @@ export function useSettlements(filter: { status?: Gql.SettlementStatus; partnerI
   return useQuery({ queryKey: ["mgpl", "settlements", vars], queryFn: () => mgpl.settlements.list(vars), enabled: can("accounts:read") });
 }
 
+/** Hospitals, insurers, TPAs and corporates billed on credit (finance-kit receivables). */
+export function useCustomers(activeOnly = false) {
+  const { can } = useViewer();
+  return useQuery({ queryKey: ["mgpl", "customers", activeOnly], queryFn: () => mgpl.receivables.customers(activeOnly), enabled: can("accounts:read") });
+}
+
 /** A mutation that shows a toast, and refreshes the given areas when it works. */
 export function useAction<V, R>(fn: (v: V) => Promise<R>, o: { success?: string | ((r: R) => string); refresh?: string[][]; onDone?: (r: R) => void } = {}) {
   const qc = useQueryClient();

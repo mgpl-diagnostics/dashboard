@@ -106,6 +106,7 @@ function UserForm({ user, onClose }: { user: Gql.User | null; onClose: () => voi
   );
   const toggle = useAction((u: Gql.User) => (u.status === "disabled" ? mgpl.users.enable(u.id) : mgpl.users.disable(u.id)), { success: (u) => (u.status === "disabled" ? "Switched off. Their sessions end now" : "Switched back on"), refresh, onDone: onClose });
   const self = user?.id === viewer.user.id;
+  const [resetting, setResetting] = useState(false);
 
   return (
     <Modal opened onClose={onClose} title={user ? user.name : "Add a user"} size="lg">
@@ -152,12 +153,36 @@ function UserForm({ user, onClose }: { user: Gql.User | null; onClose: () => voi
               </Button>
             ) : <span />}
             <Group gap="xs">
+              {user && can("user:update") && !self && <Button variant="subtle" onClick={() => setResetting(true)}>Set password</Button>}
               <Button variant="default" onClick={onClose}>Cancel</Button>
               <Button type="submit" loading={save.isPending} disabled={!!user && !can("role:manage") && !can("user:update")}>{user ? "Save roles" : "Add user"}</Button>
             </Group>
           </Group>
         </Stack>
       </form>
+      {user && resetting && <SetPassword user={user} onClose={() => setResetting(false)} />}
+    </Modal>
+  );
+}
+
+/** Sets another user's password (user:update). Their sessions end, so they sign in again with it. */
+function SetPassword({ user, onClose }: { user: Gql.User; onClose: () => void }) {
+  const [password, setPassword] = useState("");
+  const [again, setAgain] = useState("");
+  const run = useAction(() => mgpl.users.setPassword(user.id, password), { success: `Password set. ${user.name} is signed out everywhere and signs in with the new one`, onDone: onClose });
+  const short = password.length > 0 && password.length < 10;
+  const differs = again.length > 0 && again !== password;
+  return (
+    <Modal opened onClose={onClose} title={`Set a password for ${user.name}`} size="sm">
+      <Stack gap="sm">
+        <Text size="sm" c="dimmed">For someone who can&apos;t reset it by email. Tell them the password in person; they can change it in My account.</Text>
+        <PasswordInput label="New password" description="At least 10 characters, not their name or email" data-autofocus autoComplete="new-password" value={password} onChange={(e) => setPassword(e.currentTarget.value)} error={short ? "Use at least 10 characters" : null} />
+        <PasswordInput label="Type it again" autoComplete="new-password" value={again} onChange={(e) => setAgain(e.currentTarget.value)} error={differs ? "The two don't match" : null} />
+        <Group justify="flex-end">
+          <Button variant="default" onClick={onClose}>Cancel</Button>
+          <Button color="red" loading={run.isPending} disabled={password.length < 10 || password !== again} onClick={() => run.mutate(undefined)}>Set password</Button>
+        </Group>
+      </Stack>
     </Modal>
   );
 }

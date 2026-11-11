@@ -15,6 +15,7 @@ import { Guard } from "@/components/Guard";
 import { PageHeader } from "@/components/PageHeader";
 import { QueryError } from "@/components/QueryError";
 import { StatusBadge } from "@/components/StatusBadge";
+import { IssueCreditNote } from "@/components/receivables/CreditNoteDrawer";
 import { dateTime, humanize, rupees, toPaise } from "@/lib/format";
 import { errorMessage, mgpl } from "@/lib/mgpl";
 import { useAction, useInvoices } from "@/lib/queries";
@@ -83,6 +84,7 @@ function InvoiceDrawer({ id, onClose }: { id: string | null; onClose: () => void
   const { can } = useViewer();
   const q = useQuery({ queryKey: ["mgpl", "invoices", "one", id], queryFn: () => mgpl.invoices.get(id!), enabled: !!id });
   const [payKind, setPayKind] = useState<"payment" | "refund" | null>(null);
+  const [crediting, setCrediting] = useState(false);
   const [printing, setPrinting] = useState(false);
   const i = q.data;
   const cancel = useAction((v: { id: string; reason: string }) => mgpl.invoices.cancel(v.id, v.reason), { success: "Invoice cancelled and reversed in the books", refresh: [["mgpl", "invoices"], ["mgpl", "bookings"]] });
@@ -172,11 +174,13 @@ function InvoiceDrawer({ id, onClose }: { id: string | null; onClose: () => void
                   Cancel invoice
                 </Button>
               )}
+              {can("accounts:post") && i.status !== "draft" && i.status !== "credited" && <Button variant="default" onClick={() => setCrediting(true)}>Credit note</Button>}
               {can("payment:refund") && i.paidPaise > 0 && <Button variant="default" onClick={() => setPayKind("refund")}>Refund</Button>}
               {can("payment:create") && i.duePaise > 0 && <Button onClick={() => setPayKind("payment")}>Record payment</Button>}
             </Group>
           )}
           <PaymentModal key={payKind ?? "none"} invoice={i} kind={payKind} onClose={() => setPayKind(null)} />
+          {crediting && <IssueCreditNote invoice={i} onClose={() => setCrediting(false)} />}
         </Stack>
       )}
     </Drawer>

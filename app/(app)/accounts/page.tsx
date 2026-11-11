@@ -1,12 +1,12 @@
 "use client";
 import { useState } from "react";
-import { Alert, Button, Card, Group, SimpleGrid, Skeleton, Stack, Table, Tabs, Text, Title } from "@mantine/core";
+import { Alert, Button, Card, Group, SimpleGrid, Skeleton, Stack, Tabs, Text, Title } from "@mantine/core";
 import { BarChart } from "@mantine/charts";
 import { DatePickerInput } from "@mantine/dates";
 import { notifications } from "@mantine/notifications";
 import { DataTable } from "mantine-datatable";
 import { useQuery } from "@tanstack/react-query";
-import { DownloadSimpleIcon } from "@phosphor-icons/react";
+import { DownloadSimpleIcon, PlusIcon } from "@phosphor-icons/react";
 import { csvBlob, downloadBlob, type Gql } from "@mgpl-diagnostics/client";
 import { Enter } from "@/components/Enter";
 import { Figure } from "@/components/Figure";
@@ -18,6 +18,8 @@ import { dateTime, dayjs, financialYearRange, humanize, IST, rupees, rupeesShort
 import { errorMessage, mgpl } from "@/lib/mgpl";
 import { tableLook } from "@/lib/table";
 import { useViewer } from "@/lib/viewer";
+import { BalanceSheetTab, CashBookTab, LedgersTab, NewVoucher } from "@/components/books/BooksTabs";
+import { VoucherDrawer } from "@/components/books/VoucherDrawer";
 
 export default function AccountsPage() {
   return (
@@ -28,6 +30,9 @@ export default function AccountsPage() {
 }
 
 function Accounts() {
+  const { can } = useViewer();
+  const [posting, setPosting] = useState(false);
+  const [posted, setPosted] = useState<string | null>(null);
   const fy = financialYearRange();
   const [range, setRange] = useState<[string | null, string | null]>([dayjs(fy.from).tz(IST).format("YYYY-MM-DD"), dayjs().tz(IST).format("YYYY-MM-DD")]);
   const from = range[0] ? dayjs.tz(range[0], IST).startOf("day").toISOString() : fy.from;
@@ -37,22 +42,30 @@ function Accounts() {
       <PageHeader
         title="Accounts"
         description={`Financial year ${fy.label}, April to March`}
-        actions={<DatePickerInput type="range" aria-label="Period" value={range} onChange={(v) => setRange(v as [string | null, string | null])} valueFormat="D MMM YYYY" w={260} allowSingleDateInRange />}
+        actions={<>{can("accounts:post") && <Button variant="default" leftSection={<PlusIcon size={16} />} onClick={() => setPosting(true)}>Post voucher</Button>}<DatePickerInput type="range" aria-label="Period" value={range} onChange={(v) => setRange(v as [string | null, string | null])} valueFormat="D MMM YYYY" w={260} allowSingleDateInRange /></>}
       />
       <Tabs defaultValue="pl" keepMounted={false} data-enter>
         <Tabs.List mb="md" style={{ overflowX: "auto", flexWrap: "nowrap" }}>
           <Tabs.Tab value="pl">Profit and loss</Tabs.Tab>
+          <Tabs.Tab value="bs">Balance sheet</Tabs.Tab>
           <Tabs.Tab value="tb">Trial balance</Tabs.Tab>
           <Tabs.Tab value="due">Receivables</Tabs.Tab>
           <Tabs.Tab value="day">Day book</Tabs.Tab>
+          <Tabs.Tab value="cash">Cash book</Tabs.Tab>
+          <Tabs.Tab value="ledgers">Ledgers</Tabs.Tab>
           <Tabs.Tab value="gst">GST</Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="pl"><ProfitLoss from={from} to={to} /></Tabs.Panel>
+        <Tabs.Panel value="bs"><BalanceSheetTab asOf={to} /></Tabs.Panel>
         <Tabs.Panel value="tb"><Trial asOf={to} /></Tabs.Panel>
         <Tabs.Panel value="due"><Receivables /></Tabs.Panel>
         <Tabs.Panel value="day"><DayBook from={from} to={to} /></Tabs.Panel>
+        <Tabs.Panel value="cash"><CashBookTab from={from} to={to} /></Tabs.Panel>
+        <Tabs.Panel value="ledgers"><LedgersTab from={from} to={to} /></Tabs.Panel>
         <Tabs.Panel value="gst"><Gst from={from} to={to} /></Tabs.Panel>
       </Tabs>
+      {posting && <NewVoucher onClose={() => setPosting(false)} onPosted={(v) => { setPosting(false); setPosted(v.id); }} />}
+      <VoucherDrawer id={posted} onClose={() => setPosted(null)} />
     </Enter>
   );
 }
@@ -199,6 +212,7 @@ function Receivables() {
 
 function DayBook({ from, to }: { from: string; to: string }) {
   const { branchId } = useViewer();
+  const [open, setOpen] = useState<string | null>(null);
   const b = branchId ?? undefined;
   const q = useQuery({ queryKey: ["mgpl", "books", "day", from, to, b], queryFn: () => mgpl.books.dayBook({ from, to }, { branchId: b }) });
   const ex = useExport();
@@ -211,21 +225,7 @@ function DayBook({ from, to }: { from: string; to: string }) {
         fetching={q.isPending}
         records={q.data ?? []}
         noRecordsText="No vouchers in this period"
-        rowExpansion={{
-          content: ({ record }) => (
-            <Table verticalSpacing={4} px="md">
-              <Table.Tbody>
-                {record.entries.map((e, k) => (
-                  <Table.Tr key={k}>
-                    <Table.Td><Text size="sm">{e.ledger.name}</Text></Table.Td>
-                    <Table.Td ta="right" className="figure">{e.debitPaise ? rupees(e.debitPaise) : ""}</Table.Td>
-                    <Table.Td ta="right" className="figure">{e.creditPaise ? rupees(e.creditPaise) : ""}</Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
-          ),
-        }}
+        onRowClick={({ record }) => setOpen(record.id)}
         columns={[
           { accessor: "date", title: "Date", render: (v) => dateTime(v.date) },
           { accessor: "voucherNo", title: "Voucher", render: (v) => <Text size="sm" ff="monospace" style={{ whiteSpace: "nowrap" }}>{v.voucherNo}</Text> },
@@ -235,6 +235,7 @@ function DayBook({ from, to }: { from: string; to: string }) {
           { accessor: "status", title: "", textAlign: "right", render: (v) => <StatusBadge status={v.status} /> },
         ]}
       />
+      <VoucherDrawer id={open} onClose={() => setOpen(null)} />
     </Stack>
   );
 }
